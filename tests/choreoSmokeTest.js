@@ -17,7 +17,7 @@ myModule.initialiseSwarmEngine(swarmCommunicationStrategy, nameService, serialis
 nameService.registerLocation("Agent1", "Agent1");
 nameService.registerLocation("Agent2", "Agent2");
 
-let swarmDefinition = $$.swarm.define("TestSwarm", {
+let swarmDefinition = $$.swarm.describe("TestSwarm", {
     phase1:function(){
         this.swarm("Agent1", "phase2", "from Agent 1");
     },
@@ -27,5 +27,5 @@ let swarmDefinition = $$.swarm.define("TestSwarm", {
 })
 
 
-swarmDefinition.startSwarm().phase1();
+swarmDefinition().phase1();
 

@@ -15,6 +15,10 @@ function fakeCommunicationStrategy(nameService, serialisationStrategy){
 
     }
 
+    this.enableSwarmExecution = function(callback){
+
+    }
+
 }
 
 module.exports.createStrategy = function(nameService, serialisationStrategy){
