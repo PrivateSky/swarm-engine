@@ -14,7 +14,7 @@ function NameService(){
             groups[group] = {};
         }
         groups[group][identity] = identity;
-        groups[ALL][identity] = identity;
+        groups["ALL"][identity] = identity;
         registry[identity] = localtionObject;
     }
 

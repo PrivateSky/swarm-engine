@@ -1,17 +1,18 @@
 require('../../../psknode/bundles/pskruntime');
 let dc = require('../../double-check');
+let swarm = require('../../choreo');
 let assert = dc.assert;
-let choreo = require('../../choreo');
+let myModule = require('../index');
 
 
-let nameService = choreo.createNameService("default");
-let serialisationStrategy = choreo.createSerialisationStrategy("json");
+let nameService = myModule.createNameService("default");
+let serialisationStrategy = myModule.createSerialisationStrategy("json");
 
-let swarmCommunicationStrategy = choreo.createCommunicationStrategy("local", nameService, serialisationStrategy);
+let swarmCommunicationStrategy = myModule.createCommunicationStrategy("local", nameService, serialisationStrategy);
 
-let securityContext = choreo.createSecurityContext();
+let securityContext = myModule.createSecurityContext();
 
-choreo.initialiseSwarmEngine(swarmCommunicationStrategy, nameService, serialisationStrategy, securityContext);
+myModule.initialiseSwarmEngine(swarmCommunicationStrategy, nameService, serialisationStrategy, securityContext);
 
 nameService.registerLocation("Agent1", "Agent1");
 nameService.registerLocation("Agent2", "Agent2");

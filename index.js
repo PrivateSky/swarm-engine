@@ -20,23 +20,29 @@ module.exports = {
     createSerialisationStrategy:function(strategyName, ...args){
         switch(strategyName){
             case "json":
-            case "JSON":return require("modules/swarm-engine/strategies/JSONSerialisationStrategy").createStrategy(args);
+            case "JSON":
+                return require("./strategies/JSONSerialisationStrategy").createStrategy(args);
             default: console.error("Unknown strategy ", strategyName);
         }
         return undefined;
     },
     createCommunicationStrategy:function(strategyName, ...args){
         switch(strategyName){
-            case "fake":return require("modules/swarm-engine/strategies/fakeCommunicationStrategy").createStrategy(args);
-            case "sandbox":return require("modules/swarm-engine/strategies/fakeCommunicationStrategy").createStrategy(args);
-            case "serviceWorkers":return require("modules/swarm-engine/strategies/fakeCommunicationStrategy").createStrategy(args);
+            case "fake":
+            case "local":
+                return require("./strategies/fakeCommunicationStrategy").createStrategy(args);
+            case "sandbox":
+                return require("./strategies/fakeCommunicationStrategy").createStrategy(args);
+            case "serviceWorkers":
+                return require("./strategies/fakeCommunicationStrategy").createStrategy(args);
             default: console.error("Unknown strategy ", strategyName);
         }
         return undefined;
     },
     createNameService:function(strategyName, ...args){
         switch(strategyName){
-            case "default":return require("modules/swarm-engine/strategies/defaultNameService").createStrategy(args);
+            case "default":
+                return require("./strategies/defaultNameService").createStrategy(args);
             default: console.error("Unknown strategy ", strategyName);
         }
         return undefined;
