@@ -1,7 +1,7 @@
 
 
 
-let psc = require("../../psk-security-context");
+let psc = require("../psk-security-context");
 
 module.exports = {
     initialiseSwarmEngine:function(swarmCommunicationStrategy, nameService, serialisationStrategy, securityContext){
