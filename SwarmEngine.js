@@ -2,31 +2,31 @@ function SwarmEngine(swarmCommunicationStrategy, nameService, serialisationStrat
     let _identity = "anonymous";
     let swarmInstancesCache = {
 
-    }
+    };
 
     this.setNameService = function(ns){
         nameService = ns;
-    }
+    };
 
     this.setSerialisationStrategy = function(ss){
         serialisationStrategy = ss;
-    }
+    };
 
     this.setsecurityContext = function(sc){
         securityContext = sc;
-    }
+    };
 
     this.init = function(identity){
         _identity = identity;
-    }
+    };
 
     this.stop = function(){
 
-    }
+    };
 
     swarmCommunicationStrategy.enableSwarmExecution(function(swarm){
 
-    })
+    });
 
 
     this.waitForSwarm = function(callback, swarm, keepAliveCheck){
@@ -39,7 +39,7 @@ function SwarmEngine(swarmCommunicationStrategy, nameService, serialisationStrat
                     swarm:swarm,
                     callback:callback,
                     keepAliveCheck:keepAliveCheck
-                }
+                };
                 swarmInstancesCache[swarmId] = watcher;
             }
         }
@@ -50,7 +50,7 @@ function SwarmEngine(swarmCommunicationStrategy, nameService, serialisationStrat
 
         //$$.uidGenerator.wait_for_condition(condition,doLogic);
         swarm.observe(doLogic, null, filter);
-    }
+    };
 
     function cleanSwarmWaiter(swarmSerialisation){ // TODO: add better mechanisms to prevent memory leaks
         let  swarmId = swarmSerialisation.meta.swarmId;
@@ -83,7 +83,12 @@ function SwarmEngine(swarmCommunicationStrategy, nameService, serialisationStrat
             swarm.update(swarmSerialisation);
 
         } else {
-            swarm = $$.swarm.start(swarmType);
+            if(typeof $$.blockchain !== "undefined") {
+                swarm = $$.swarm.startWithContext($$.blockchain, swarmType);
+            }else{
+                swarm = $$.swarm.start(swarmType);
+            }
+
             if(!swarm){
                 throw new Error(`Unknown swarm type <${swarmType}>. Check if swarm type is present in domain constituion!`);
             }else{
@@ -93,11 +98,11 @@ function SwarmEngine(swarmCommunicationStrategy, nameService, serialisationStrat
             /*swarm = $$.swarm.start(swarmType, swarmSerialisation);*/
         }
 
-        if (swarmSerialisation.meta.command == "asyncReturn") {
+        if (swarmSerialisation.meta.command === "asyncReturn") {
             let  co = $$.PSK_PubSub.publish($$.CONSTANTS.SWARM_RETURN, swarmSerialisation);
             console.log("Subscribers listening on", $$.CONSTANTS.SWARM_RETURN, co);
             // cleanSwarmWaiter(swarmSerialisation);
-        } else if (swarmSerialisation.meta.command == "executeSwarmPhase") {
+        } else if (swarmSerialisation.meta.command === "executeSwarmPhase") {
             swarm.runPhase(swarmSerialisation.meta.phaseName, swarmSerialisation.meta.args);
         } else {
             console.log("Unknown command", swarmSerialisation.meta.command, "in swarmSerialisation.meta.command");
@@ -105,8 +110,6 @@ function SwarmEngine(swarmCommunicationStrategy, nameService, serialisationStrat
 
         return swarm;
     }
-
-
 }
 
 
