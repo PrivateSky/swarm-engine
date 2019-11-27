@@ -24,10 +24,19 @@ function SwarmEngine(swarmCommunicationStrategy, nameService, serialisationStrat
 
     };
 
+    /* ???
     swarmCommunicationStrategy.enableSwarmExecution(function(swarm){
 
-    });
+    }); */
 
+
+    this.sendSwarm = function(valueObject, command, destinationContext,  phaseName, args ){
+        serialisationStrategy.cleanJSONSerialisation(valueObject, phaseName, args, function(err,jsMsg){
+            jsMsg.meta.target = destinationContext;
+            jsMsg.meta.command = command;
+            swarmCommunicationStrategy.dispatch(jsMsg)
+        });
+    }
 
     this.waitForSwarm = function(callback, swarm, keepAliveCheck){
 
@@ -90,7 +99,7 @@ function SwarmEngine(swarmCommunicationStrategy, nameService, serialisationStrat
             }
 
             if(!swarm){
-                throw new Error(`Unknown swarm type <${swarmType}>. Check if swarm type is present in domain constituion!`);
+                throw new Error(`Unknown swarm with type <${swarmType}>. Check if this swarm is defined in the domain constitution!`);
             }else{
                 swarm.update(swarmSerialisation);
             }
