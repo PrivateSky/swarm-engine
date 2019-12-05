@@ -1,44 +1,96 @@
-function SwarmEngine(swarmCommunicationStrategy, nameService, serialisationStrategy, securityContext){
-    let _identity = "anonymous";
-    let swarmInstancesCache = {
+function SwarmEngine(){
 
+    //loading swarm space
+    let cm = require("callflow");
+    let swarmUtils = require("./swarms/swarm_template-se");
+
+    const protectedFunctions = {};
+
+    const SwarmPacker = require("../swarmutils").SwarmPacker;
+    //serializationType used when starting a swarm from this SwarmEngine instance
+    let serializationType = SwarmPacker.prototype.JSON;
+
+    const swarmInstancesCache = new Map();
+    const powerCordCollection = new Map();
+
+    this.setSerializationType = function(type){
+        if(typeof SwarmPacker.getSerializer(type) !== "undefined"){
+            serializationType = type;
+        }else{
+            $$.throw(`Unknown serialization type "${type}"`);
+        }
     };
 
-    this.setNameService = function(ns){
-        nameService = ns;
+    this.plug = function(identity, powerCordImpl){
+        makePluggable(powerCordImpl);
+        powerCordImpl.plug(relay);
+
+        powerCordCollection.set(identity, powerCordImpl);
     };
 
-    this.setSerialisationStrategy = function(ss){
-        serialisationStrategy = ss;
+    this.unplug = function(identity){
+        const powerCord = powerCordCollection.get(identity);
+
+        if (!powerCord) {
+            //silent fail
+            return;
+        }
+
+        powerCord.unplug();
+        powerCordCollection.delete(identity);
     };
 
-    this.setsecurityContext = function(sc){
-        securityContext = sc;
-    };
+    function getPowerCord(identity){
+        const powerCord = powerCordCollection.get(identity);
 
-    this.init = function(identity){
-        _identity = identity;
-    };
+        if (!powerCord) {
+            //should improve the search of powerCord based on * and self :D
 
-    this.stop = function(){
+            $$.throw(`No powerCord found for the identity "${identity}"`);
+        }
 
-    };
+        return powerCord;
+    }
 
     /* ???
     swarmCommunicationStrategy.enableSwarmExecution(function(swarm){
 
     }); */
 
-
-    this.sendSwarm = function(valueObject, command, destinationContext,  phaseName, args ){
-        serialisationStrategy.cleanJSONSerialisation(valueObject, phaseName, args, function(err,jsMsg){
-            jsMsg.meta.target = destinationContext;
-            jsMsg.meta.command = command;
-            swarmCommunicationStrategy.dispatch(jsMsg)
-        });
+    function serialize(swarm){
+        const beesHealer = require("../swarmutils").beesHealer;
+        const simpleJson = beesHealer.asJSON(swarm, swarm.meta.phaseName, swarm.meta.args);
+        const serializer = SwarmPacker.getSerializer(swarm.meta.serializationType || serializationType);
+        return SwarmPacker.pack(simpleJson, serializer);
     }
 
-    this.waitForSwarm = function(callback, swarm, keepAliveCheck){
+    function createBaseOfStartSwarmCommand() {
+        const swarmutils = require('swarmutils');
+        const OwM = swarmutils.OwM;
+        const swarm = new OwM();
+        swarm.setMeta("swarmId", $$.uidGenerator.safe_uuid());
+        swarm.setMeta("requestId", swarm.getMeta("swarmId"));
+
+        swarm.setMeta("command", SwarmEngine.prototype.EXECUTE_PHASE_COMMAND);
+        return swarm;
+    }
+
+    this.startSwarmAs = function(identity, swarmName, swarmPhase, ...args){
+        protectedFunctions.sendSwarm(createBaseOfStartSwarmCommand(identity, swarmName, phaseName, args));
+    };
+
+    protectedFunctions.sendSwarm = function(swarmAsVO, command, identity, phaseName, args){
+        const powerCord = getPowerCord(identity);
+
+        swarmAsVO.setMeta("swarmTypeName", swarmTypeName);
+        swarmAsVO.setMeta("phaseName", phaseName);
+        swarmAsVO.setMeta("target", identity);
+        swarmAsVO.setMeta("args", args);
+
+        powerCord.sendSwarm(serialize(swarmAsVO));
+    };
+
+    protectedFunctions.waitForSwarm = function(callback, swarm, keepAliveCheck){
 
         function doLogic(){
             let  swarmId = swarm.getInnerValue().meta.swarmId;
@@ -79,7 +131,7 @@ function SwarmEngine(swarmCommunicationStrategy, nameService, serialisationStrat
         }
     }
 
-    this.revive_swarm = function(swarmSerialisation){
+    protectedFunctions.revive_swarm = function(swarmSerialisation){
 
         let  swarmId     = swarmSerialisation.meta.swarmId;
         let  swarmType   = swarmSerialisation.meta.swarmTypeName;
@@ -119,14 +171,26 @@ function SwarmEngine(swarmCommunicationStrategy, nameService, serialisationStrat
 
         return swarm;
     }
+
+    $$.swarms           = cm.createSwarmEngine("swarm", swarmUtils.getTemplateHandler(protectedFunctions));
+    $$.swarm            = $$.swarms;
 }
 
+Object.defineProperty(SwarmEngine.prototype, "EXECUTE_PHASE_COMMAND", {value: "executeSwarmPhase"});
+Object.defineProperty(SwarmEngine.prototype, "RETURN_PHASE_COMMAND", {value: "return"});
+Object.defineProperty(SwarmEngine.prototype, "META_RETURN_CONTEXT", {value: "returnContext"});
+Object.defineProperty(SwarmEngine.prototype, "META_WAITSTACK", {value: "waitStack"});
 
+function makePluggable(powerCord){
+    powerCord.plug = function (powerTransfer) {
+        powerCord.transfer = powerTransfer;
+    };
 
-module.exports.createSwarmEngine = function(swarmCommunicationStrategy, nameService, serialisationStrategy, securityContext){
-    if(!swarmCommunicationStrategy){
-        console.error("swarmCommunicationStrategy can't be undefined");
-    }
-    $$.swarmEngine = new SwarmEngine(swarmCommunicationStrategy, nameService, serialisationStrategy, securityContext);
-    return $$.swarmEngine;
+    powerCord.unplug = function () {
+        powerCord.transfer = null;
+    };
+
+    return powerCord;
 }
+
+module.exports = new SwarmEngine();
