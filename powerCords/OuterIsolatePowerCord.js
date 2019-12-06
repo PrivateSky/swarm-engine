@@ -14,6 +14,11 @@ function OuterIsolatePowerCord(energySource, numberOfWires = 1, apis) { // seed 
         };
 
         pool = syndicate.createWorkerPool(config, (isolate) => {
+
+            isolate.globalSetSync("getIdentity", () => {
+                return superThis.identity;
+            });
+
             if(!apis) {
                 return
             }
@@ -25,10 +30,18 @@ function OuterIsolatePowerCord(energySource, numberOfWires = 1, apis) { // seed 
 
     }
 
+    let superThis = this;
     connectToEnergy();
 
-    this.startSwarm = function (swarmSerialization) {
-        pool.addTask(swarmSerialization, this.transfer);
+
+    this.sendSwarm = function (swarmSerialization) {
+        pool.addTask(swarmSerialization, (message) => {
+            if (message instanceof Error) {
+                throw message
+            }
+console.log("Uite ca primesc un mesaj de la isolate", message.toString());
+            this.transfer(message);
+        });
     };
 
 }

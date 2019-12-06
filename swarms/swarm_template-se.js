@@ -1,9 +1,8 @@
-let cm = require("callflow");
-let CNST = require("../moduleConstants");
-
-let beesHealer = require("swarmutils").beesHealer;
-
 exports.getTemplateHandler = function(swarmEngine){
+    let cm = require("callflow");
+    let CNST = require("../moduleConstants");
+
+    let beesHealer = require("swarmutils").beesHealer;
     return {
         createForObject : function(valueObject, thisObject, localId){
 
