@@ -27,15 +27,15 @@ function InnerIsolatePowerCord() {
     this.sendSwarm = function (swarmSerialization) {
         try{
             if(swarmSerialization instanceof ArrayBuffer) {
-                swarmSerialization = new global.ExternalCopy(new Uint8Array(swarmSerialization)).copyInto();
+                swarmSerialization = global.createCopyIntoExternalCopy(new Uint8Array(swarmSerialization));
             }
 
             returnSwarm.apply(undefined, [null, swarmSerialization])
                 .catch((err) => {
-                    $$.log(err);
+                    console.log(err);
                 })
         }catch(err){
-           $$.log(err);
+           console.log(err);
         }
 
     };
