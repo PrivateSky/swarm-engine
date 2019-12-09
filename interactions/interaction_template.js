@@ -1,34 +1,42 @@
-module.exports.createForObject = function(valueObject, thisObject, localId){
-    let cm = require("callflow");
-    let CNST = require("../moduleConstants");
+exports.getTemplateHandler = function (swarmEngineApi) {
 
-    let swarmFunction = function(destinationContext, phaseName, ...args){
-        //make the execution at level 0  (after all pending events) and wait to have a swarmId
-        ret.observe(function(){
-            $$.swarmEngine.sendSwarm(valueObject,CNST.EXECUTE_PHASE_COMMAND, destinationContext,  phaseName, args);
-        },null,null);
-        ret.notify();
-        return thisObject;
-    };
+    return {
+        createForObject: function (valueObject, thisObject, localId) {
+            let cm = require("callflow");
+
+            let swarmFunction = function (destinationContext, phaseName, ...args) {
+                //make the execution at level 0  (after all pending events) and wait to have a swarmId
+                ret.observe(function () {
+                    swarmEngineApi.sendSwarm(valueObject, $$.swarmEngine.EXECUTE_PHASE_COMMAND, destinationContext, phaseName, args);
+                }, null, null);
+                ret.notify();
+                return thisObject;
+            };
+
+            function off() {
+                const swarmId = valueObject.getMeta('swarmId');
+                const swarmTypeName = valueObject.getMeta('swarmTypeName');
+
+                swarmEngineApi.off(swarmId, swarmTypeName);
+            }
 
 
-    let ret = cm.createStandardAPIsForSwarms(valueObject, thisObject, localId);
+            let ret = cm.createStandardAPIsForSwarms(valueObject, thisObject, localId);
 
-    ret.swarm           = swarmFunction;
-    ret.swarmAs         = swarmFunction;
+            ret.swarm = swarmFunction;
+            ret.swarmAs = swarmFunction;
+            ret.off = off;
 
-    ret.home            = null;
-    ret.onReturn        = null;
-    ret.onResult        = null;
+            delete ret.home;
+            delete ret.onReturn;
+            delete ret.onResult;
 
-    ret.asyncReturn     = null;
-    ret.return          = null;
+            delete ret.asyncReturn;
+            delete ret.return;
 
-    ret.off             = off;
+            delete ret.autoInit;
 
-    ret.autoInit        = function(someContext){
-
-    };
-
-    return ret;
+            return ret;
+        }
+    }
 };

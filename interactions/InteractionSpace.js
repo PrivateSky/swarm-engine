@@ -1,7 +1,14 @@
-function InteractionRelay() {
+function InteractionSpace(swarmEngineApi) {
     const listeners = {};
+    const interactionTemplate = require('./interaction_template').getTemplateHandler(swarmEngineApi);
 
-    this.dispatch = function(swarm){
+    function createThis(swarm) {
+        const thisObj = interactionTemplate.createForObject(swarm);
+        //todo: implement a proxy for public and private vars...
+        return thisObj;
+    }
+
+    this.dispatch = function (swarm) {
         const {swarmId, swarmTypeName, phaseName, args} = swarm.meta;
 
         const regexString = `(${swarmId}|\\*)\\/(${swarmTypeName}|\\*)\\/(${phaseName}|\\*)`;
@@ -12,8 +19,8 @@ function InteractionRelay() {
             if (key.match(reg)) {
                 const callbacks = listeners[key];
                 callbacks.forEach(cb => {
-                    cb(...args);
-                })
+                    cb.call(createThis(swarm), ...args);
+                });
             }
         });
 
@@ -34,7 +41,7 @@ function InteractionRelay() {
         listeners[key].push(callback);
     };
 
-    this.off = function (swarmId, swarmTypeName, phaseName, callback) {
+    this.off = function (swarmId = '*', swarmTypeName = '*', phaseName = '*', callback) {
 
         function escapeIfStar(str) {
             return str.replace("*", "\\*")
@@ -52,10 +59,14 @@ function InteractionRelay() {
             if (key.match(reg)) {
                 const callbacks = listeners[key];
 
-                listeners[key] = callbacks.filter(cb => cb !== callback);
+                if (!callback) {
+                    listeners[key] = [];
+                } else {
+                    listeners[key] = callbacks.filter(cb => cb !== callback);
+                }
             }
         });
     };
 }
 
-module.exports = InteractionRelay;
+module.exports = InteractionSpace;
