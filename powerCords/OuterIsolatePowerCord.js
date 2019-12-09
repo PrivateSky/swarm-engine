@@ -1,4 +1,3 @@
-
 function OuterIsolatePowerCord(energySource, numberOfWires = 1, apis) { // seed or array of constitution bundle paths
     const syndicate = require('../../syndicate');
     let pool = null;
@@ -19,7 +18,7 @@ function OuterIsolatePowerCord(energySource, numberOfWires = 1, apis) { // seed 
                 return superThis.identity;
             });
 
-            if(!apis) {
+            if (!apis) {
                 return
             }
 
@@ -35,12 +34,12 @@ function OuterIsolatePowerCord(energySource, numberOfWires = 1, apis) { // seed 
 
 
     this.sendSwarm = function (swarmSerialization) {
-        pool.addTask(swarmSerialization, (message) => {
-            if (message instanceof Error) {
-                throw message
+        pool.addTask(swarmSerialization, (err, msg) => {
+            if (err instanceof Error) {
+                throw err;
             }
-console.log("Uite ca primesc un mesaj de la isolate", message.toString());
-            this.transfer(message);
+
+            this.transfer(msg.buffer || msg);
         });
     };
 

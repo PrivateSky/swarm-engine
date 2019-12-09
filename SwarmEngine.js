@@ -7,7 +7,7 @@ function SwarmEngine(identity){
 
     const protectedFunctions = {};
 
-    const SwarmPacker = require("../swarmutils").SwarmPacker;
+    const SwarmPacker = require("swarmutils").SwarmPacker;
     //serializationType used when starting a swarm from this SwarmEngine instance
     let serializationType = SwarmPacker.prototype.JSON;
 
@@ -51,50 +51,41 @@ function SwarmEngine(identity){
     };
 
     this.startSwarmAs = function(identity, swarmTypeName, phaseName, ...args){
-        protectedFunctions.sendSwarm(createBaseSwarm(swarmTypeName), SwarmEngine.EXECUTE_PHASE_COMMAND, identity, phaseName, args);
+        const swarm = createBaseSwarm(swarmTypeName);
+        swarm.setMeta($$.swarmEngine.META_SECURITY_HOME_CONTEXT, myOwnIdentity);
+
+        protectedFunctions.sendSwarm(swarm, SwarmEngine.EXECUTE_PHASE_COMMAND, identity, phaseName, args);
     };
 
     function relay(swarmSerialization) {
-try {
+        try {
 
+            const swarmutils = require('swarmutils');
 
-    /*if(swarmSerialization instanceof ArrayBuffer) {
-        console.log('swarm....', new Uint8Array(swarmSerialization).toString());
-    } else {
-        console.log('not good swarm', swarmSerialization.toString(), arguments[1], '\n\n\n\n')
-    }
+            const OwM = swarmutils.OwM;
+            const SwarmPacker = swarmutils.SwarmPacker;
 
-    console.log('AM AJUNS AICI MACAR????', global.getIdentity && global.getIdentity(), ArrayBuffer.isView(swarmSerialization), typeof swarmSerialization, swarmSerialization instanceof ArrayBuffer);*/
-    console.log("SwarmEngine-ul cu identitatea", myOwnIdentity, "a primit serializarea", swarmSerialization.toString());
+            const swarmHeader = SwarmPacker.getHeader(swarmSerialization);
+            const swarmTargetIdentity = swarmHeader.swarmTarget;
 
-    const swarmutils = require('swarmutils');
+            if (myOwnIdentity === swarmTargetIdentity) {
+                const deserializedSwarm = OwM.prototype.convert(SwarmPacker.unpack(swarmSerialization));
+                protectedFunctions.execute_swarm(deserializedSwarm);
+                return;
+            }
 
-    const OwM = swarmutils.OwM;
-    const SwarmPacker = swarmutils.SwarmPacker;
+            const targetPowerCord = powerCordCollection.get(swarmTargetIdentity) || powerCordCollection.get(SwarmEngine.prototype.WILD_CARD_IDENTITY);
 
-    const swarmHeader = SwarmPacker.getHeader(swarmSerialization);
-    const swarmTargetIdentity = swarmHeader.swarmTarget;
-
-
-    console.log("incerc sa aflu daca eu trebuie sa execut", myOwnIdentity, swarmTargetIdentity);
-    if (myOwnIdentity === swarmTargetIdentity) {
-        const deserializedSwarm = OwM.prototype.convert(SwarmPacker.unpack(swarmSerialization));
-        protectedFunctions.execute_swarm(deserializedSwarm);
-        return;
-    }
-    console.log("incerc sa aflu powercordul", myOwnIdentity, swarmTargetIdentity);
-    const targetPowerCord = powerCordCollection.get(swarmTargetIdentity) || powerCordCollection.get(SwarmEngine.WILD_CARD_IDENTITY);
-
-    if (targetPowerCord) {
-        console.log("apelez powercordul", myOwnIdentity, swarmTargetIdentity);
-        targetPowerCord.sendSwarm(swarmSerialization);
-        return;
-    } else {
-        $$.err(`Bad Swarm Engine configuration. No PowerCord for identity "${swarmTargetIdentity}" found.`);
-    }
-}catch(superError){
-    console.log(superError)
-}
+            if (targetPowerCord) {
+                //console.log(myOwnIdentity, "calling powercord", swarmTargetIdentity);
+                targetPowerCord.sendSwarm(swarmSerialization);
+                return;
+            } else {
+                $$.err(`Bad Swarm Engine configuration. No PowerCord for identity "${swarmTargetIdentity}" found.`);
+            }
+        }catch(superError){
+            console.log(superError);
+        }
     }
 
     function getPowerCord(identity){
@@ -115,7 +106,7 @@ try {
     }); */
 
     function serialize(swarm){
-        const beesHealer = require("../swarmutils").beesHealer;
+        const beesHealer = require("swarmutils").beesHealer;
         const simpleJson = beesHealer.asJSON(swarm, swarm.meta.phaseName, swarm.meta.args);
         const serializer = SwarmPacker.getSerializer(swarm.meta.serializationType || serializationType);
         return SwarmPacker.pack(simpleJson, serializer);
@@ -124,15 +115,18 @@ try {
     function createBaseSwarm(swarmTypeName) {
         const swarmutils = require('swarmutils');
         const OwM = swarmutils.OwM;
+
         const swarm = new OwM();
         swarm.setMeta("swarmId", $$.uidGenerator.safe_uuid());
         swarm.setMeta("requestId", swarm.getMeta("swarmId"));
         swarm.setMeta("swarmTypeName", swarmTypeName);
         swarm.setMeta(SwarmEngine.META_SECURITY_HOME_CONTEXT, myOwnIdentity);
+
         return swarm;
     }
 
     protectedFunctions.sendSwarm = function(swarmAsVO, command, identity, phaseName, args){
+
         swarmAsVO.setMeta("phaseName", phaseName);
         swarmAsVO.setMeta("target", identity);
         swarmAsVO.setMeta("command", command);
@@ -184,45 +178,47 @@ try {
 
     protectedFunctions.execute_swarm = function(swarmOwM){
 
-        let swarmId     = swarmOwM.getMeta('swarmId');
-        let swarmType   = swarmOwM.getMeta('swarmTypeName');
-        let instance    = swarmInstancesCache.get(swarmId);
-
-        let swarm;
-
-        if (instance){
-            swarm = instance.swarm;
-            swarm.update(swarmOwM);
-
-        } else {
-            if(typeof $$.blockchain !== "undefined") {
-                swarm = $$.swarm.startWithContext($$.blockchain, swarmType);
-            }else{
-                swarm = $$.swarm.start(swarmType);
-            }
-
-            if(!swarm){
-                throw new Error(`Unknown swarm with type <${swarmType}>. Check if this swarm is defined in the domain constitution!`);
-            }else{
-                swarm.update(swarmOwM);
-            }
-
-            /*swarm = $$.swarm.start(swarmType, swarmSerialisation);*/
-        }
-
         const swarmCommand = swarmOwM.getMeta('command');
 
+        //console.log("Switching on command ", swarmCommand);
         switch (swarmCommand) {
-            case SwarmEngine.EXECUTE_PHASE_COMMAND:
+            case SwarmEngine.prototype.EXECUTE_PHASE_COMMAND:
+                let swarmId     = swarmOwM.getMeta('swarmId');
+                let swarmType   = swarmOwM.getMeta('swarmTypeName');
+                let instance    = swarmInstancesCache.get(swarmId);
+
+                let swarm;
+
+                if (instance){
+                    swarm = instance.swarm;
+                    swarm.update(swarmOwM);
+
+                } else {
+                    if(typeof $$.blockchain !== "undefined") {
+                        swarm = $$.swarm.startWithContext($$.blockchain, swarmType);
+                    }else{
+                        swarm = $$.swarm.start(swarmType);
+                    }
+
+                    if(!swarm){
+                        throw new Error(`Unknown swarm with type <${swarmType}>. Check if this swarm is defined in the domain constitution!`);
+                    }else{
+                        swarm.update(swarmOwM);
+                    }
+
+                    /*swarm = $$.swarm.start(swarmType, swarmSerialisation);*/
+                }
                 swarm.runPhase(swarmOwM.meta.phaseName, swarmOwM.meta.args);
                 break;
-            case SwarmEngine.EXECUTE_INTERACT_PHASE_COMMAND:
+            case SwarmEngine.prototype.EXECUTE_INTERACT_PHASE_COMMAND:
                 break;
-            case SwarmEngine.RETURN_PHASE_COMMAND:
+            case SwarmEngine.prototype.RETURN_PHASE_COMMAND:
+                console.log("THE SWARM is returning");
                 break;
             default:
                 $$.err(`Unrecognized swarm command ${swarmCommand}`);
         }
+
 
         // if (swarmOwM.meta.command === "asyncReturn") {
         //     let  co = $$.PSK_PubSub.publish($$.CONSTANTS.SWARM_RETURN, swarmOwM);

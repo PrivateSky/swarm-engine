@@ -21,15 +21,18 @@ exports.getTemplateHandler = function(swarmEngine){
 
             let asyncReturn = function(err, result){
 
-                let destinationContext = valueObject.meta[CNST.META_RETURN_CONTEXT];
+                let destinationContext = valueObject.meta[$$.swarmEngine.META_SECURITY_HOME_CONTEXT];
                 if(!destinationContext && valueObject.meta[CNST.META_WAITSTACK]){
                     destinationContext = valueObject.meta[CNST.META_WAITSTACK].pop();
                 }
                 if(!destinationContext){
-                    destinationContext =  valueObject.meta[CNST.META_HOME_CONTEXT];
+                    destinationContext =  valueObject.meta[$$.swarmEngine.META_SECURITY_HOME_CONTEXT];
                 }
 
-                swarmEngine.sendSwarm(valueObject, CNST.RETURN_PHASE_COMMAND, destinationContext ,  CNST.RETURN_PHASE_COMMAND, [err, result]);
+                const {OwM} = require("swarmutils");
+                const swarmClone = OwM.prototype.convert(JSON.parse(JSON.stringify(valueObject)));
+
+                swarmEngine.sendSwarm(swarmClone, $$.swarmEngine.RETURN_PHASE_COMMAND, destinationContext ,  $$.swarmEngine.RETURN_PHASE_COMMAND, [err, result]);
             };
 
             function home(err, result){
