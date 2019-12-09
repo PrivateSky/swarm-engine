@@ -14,7 +14,7 @@ const powerCord = new se.OuterIsolatePowerCord(constitution);
 
 $$.swarmEngine.plug("Agent007", powerCord);
 
-const swarm = $$.swarm.startAs("Agent007", "global.echo", "say", "Uite ca merge!");
-/*swarm.onReturn((...args)=>{
+const swarm = $$.interaction.startSwarmAs("Agent007", "global.echo", "say", "Uite ca merge!");
+swarm.onReturn((...args)=>{
     console.log(...args);
-})*/;
+});

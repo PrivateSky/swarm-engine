@@ -1,10 +1,6 @@
 function SwarmEngine(identity){
     let myOwnIdentity = identity || SwarmEngine.prototype.ANONYMOUS_IDENTITY;
 
-    //loading swarm space
-    let cm = require("callflow");
-    let swarmUtils = require("./swarms/swarm_template-se");
-
     const protectedFunctions = {};
 
     const SwarmPacker = require("swarmutils").SwarmPacker;
@@ -50,12 +46,20 @@ function SwarmEngine(identity){
         powerCordCollection.delete(identity);
     };
 
-    this.startSwarmAs = function(identity, swarmTypeName, phaseName, ...args){
+    protectedFunctions.startSwarmAs = function(identity, swarmTypeName, phaseName, ...args){
         const swarm = createBaseSwarm(swarmTypeName);
         swarm.setMeta($$.swarmEngine.META_SECURITY_HOME_CONTEXT, myOwnIdentity);
 
         protectedFunctions.sendSwarm(swarm, SwarmEngine.EXECUTE_PHASE_COMMAND, identity, phaseName, args);
+        return swarm;
     };
+
+
+    const InteractionRelay = require('./InteractionRelay');
+    const ir = new InteractionRelay();
+
+    protectedFunctions.on = ir.on;
+    protectedFunctions.off = ir.off;
 
     function relay(swarmSerialization) {
         try {
@@ -211,9 +215,11 @@ function SwarmEngine(identity){
                 swarm.runPhase(swarmOwM.meta.phaseName, swarmOwM.meta.args);
                 break;
             case SwarmEngine.prototype.EXECUTE_INTERACT_PHASE_COMMAND:
+                ir.dispatch(swarmOwM);
                 break;
             case SwarmEngine.prototype.RETURN_PHASE_COMMAND:
                 console.log("THE SWARM is returning");
+                ir.dispatch(swarmOwM);
                 break;
             default:
                 $$.err(`Unrecognized swarm command ${swarmCommand}`);
@@ -233,13 +239,13 @@ function SwarmEngine(identity){
         // return swarm;
     };
 
-    $$.swarms           = cm.createSwarmEngine("swarm", swarmUtils.getTemplateHandler(protectedFunctions));
-    $$.swarm            = $$.swarms;
+    require("./swarms")(protectedFunctions);
+    require("./interactions")(protectedFunctions);
 }
 
 Object.defineProperty(SwarmEngine.prototype, "EXECUTE_PHASE_COMMAND", {value: "executeSwarmPhase"});
 Object.defineProperty(SwarmEngine.prototype, "EXECUTE_INTERACT_PHASE_COMMAND", {value: "executeInteractPhase"});
-Object.defineProperty(SwarmEngine.prototype, "RETURN_PHASE_COMMAND", {value: "return"});
+Object.defineProperty(SwarmEngine.prototype, "RETURN_PHASE_COMMAND", {value: "__return__"});
 
 Object.defineProperty(SwarmEngine.prototype, "META_RETURN_CONTEXT", {value: "returnContext"});
 Object.defineProperty(SwarmEngine.prototype, "META_SECURITY_HOME_CONTEXT", {value: "homeSecurityContext"});
