@@ -30,12 +30,10 @@ assert.callback('interactionAttachToPriority', (callback) => {
     const swarm = $$.interaction.startSwarmAs("Agent007", "global.echo", "interactSay", "it works");
     swarm.on({
         interactResponse: function(input){
-            assert.equal(input, 'it works');
             onCalled = true;
             this.swarm("Agent007", "finally", input);
         }
     }).onReturn(function(){
-        console.log('ia uite');
         onReturnCalled = true;
     });
 

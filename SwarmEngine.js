@@ -218,7 +218,6 @@ function SwarmEngine(identity) {
                 is.dispatch(swarmOwM);
                 break;
             case SwarmEngine.prototype.RETURN_PHASE_COMMAND:
-                console.log("THE SWARM is returning");
                 is.dispatch(swarmOwM);
                 break;
             default:

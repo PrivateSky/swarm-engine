@@ -14,30 +14,30 @@ function InteractionSpace(swarmEngineApi) {
         const genericKey = `*/${swarmTypeName}/${phaseName}`;
         const particularKey = `${swarmId}/${swarmTypeName}/${phaseName}`;
 
-        const callbacks = listeners[particularKey] || listeners[genericKey] || [];
+        const handlers = listeners[particularKey] || listeners[genericKey] || [];
 
-        callbacks.forEach(cb => {
-            cb.call(createThis(swarm), ...args);
+        handlers.forEach(fn => {
+            fn.call(createThis(swarm), ...args);
         });
 
         if (phaseName === $$.swarmEngine.RETURN_PHASE_COMMAND) {
-            Object.keys(listeners).forEach(key => {
-                if (key.startsWith(swarmId + "/")) {
-                    delete listeners[key];
-                }
-            });
+            delete listeners[particularKey];
+        }
+
+        if (handlers.length === 0) {
+            console.log(`No implementation for phase "${phaseName}" was found`);
         }
     };
 
-    this.on = function (swarmId, swarmTypeName, phaseName, callback) {
+    this.on = function (swarmId, swarmTypeName, phaseName, handler) {
         const key = `${swarmId}/${swarmTypeName}/${phaseName}`;
         if (typeof listeners[key] === "undefined") {
             listeners[key] = [];
         }
-        listeners[key].push(callback);
+        listeners[key].push(handler);
     };
 
-    this.off = function (swarmId = '*', swarmTypeName = '*', phaseName = '*', callback) {
+    this.off = function (swarmId = '*', swarmTypeName = '*', phaseName = '*', handler) {
 
         function escapeIfStar(str) {
             return str.replace("*", "\\*")
@@ -53,12 +53,12 @@ function InteractionSpace(swarmEngineApi) {
         const keys = Object.keys(listeners);
         keys.forEach(key => {
             if (key.match(reg)) {
-                const callbacks = listeners[key];
+                const handlers = listeners[key];
 
-                if (!callback) {
+                if (!handler) {
                     listeners[key] = [];
                 } else {
-                    listeners[key] = callbacks.filter(cb => cb !== callback);
+                    listeners[key] = handlers.filter(fn => fn !== handler);
                 }
             }
         });
