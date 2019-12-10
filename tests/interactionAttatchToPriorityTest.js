@@ -1,39 +1,38 @@
 const se = require("../index");
 require("./../../../psknode/bundles/pskruntime");
-const assert = require('../../double-check').assert;
+const dc = require('../../double-check');
+const assert = dc.assert;
 const path = require("path");
-
-se.initialise();
 
 const constitution = [
     path.join(__dirname, '../../../psknode/bundles/sandboxBase.js'),
     path.join(__dirname, '../../../psknode/bundles/pskruntime.js'),
-    path.join(__dirname, '../../../psknode/bundles/domain.js')
+    path.join(__dirname, "swarmCollection/basicSwarm.js")
 ];
 
+se.initialise();
 const powerCord = new se.OuterIsolatePowerCord(constitution);
 
 $$.swarmEngine.plug("Agent007", powerCord);
 
-
 assert.callback('interactionAttachToPriority', (callback) => {
     let attachToCalled = false;
     let onCalled = false;
-    let onReturnCalled  = false;
+    let onReturnCalled = false;
 
     $$.interactions.attachTo("global.echo", {
-        interactResponse: function(input){
+        interactResponse: function (input) {
             attachToCalled = true;
         }
     });
 
     const swarm = $$.interaction.startSwarmAs("Agent007", "global.echo", "interactSay", "it works");
     swarm.on({
-        interactResponse: function(input){
+        interactResponse: function (input) {
             onCalled = true;
             this.swarm("Agent007", "finally", input);
         }
-    }).onReturn(function(){
+    }).onReturn(function () {
         onReturnCalled = true;
     });
 
@@ -44,5 +43,3 @@ assert.callback('interactionAttachToPriority', (callback) => {
         callback();
     }, 1000);
 }, 1500);
-
-
