@@ -8,5 +8,7 @@ module.exports = {
         }
     },
     OuterIsolatePowerCord: require("./powerCords/OuterIsolatePowerCord"),
-    InnerIsolatePowerCord: require("./powerCords/InnerIsolatePowerCord")
+    InnerIsolatePowerCord: require("./powerCords/InnerIsolatePowerCord"),
+    OuterThreadPowerCord: require("./powerCords/OuterThreadPowerCord"),
+    InnerThreadPowerCord: require("./powerCords/InnerThreadPowerCord")
 };

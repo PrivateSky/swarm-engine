@@ -257,12 +257,22 @@ Object.defineProperty(SwarmEngine.prototype, "WILD_CARD_IDENTITY", {value: "*"})
 function makePluggable(powerCord) {
     powerCord.plug = function (identity, powerTransfer) {
         powerCord.transfer = powerTransfer;
-        Object.defineProperty(powerCord, "identity", {value: identity});
+        powerCord.identity = identity;
     };
 
     powerCord.unplug = function () {
         powerCord.transfer = null;
     };
+
+    Object.defineProperty(powerCord, "identity", {
+        set: (value) => {
+            if(typeof this.__identity === "undefined"){
+                this.__identity = value;
+            }
+        }, get: () => {
+            return this.__identity;
+        }
+    });
 
     return powerCord;
 }
