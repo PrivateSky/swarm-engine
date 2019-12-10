@@ -11,17 +11,13 @@ function InteractionSpace(swarmEngineApi) {
     this.dispatch = function (swarm) {
         const {swarmId, swarmTypeName, phaseName, args} = swarm.meta;
 
-        const regexString = `(${swarmId}|\\*)\\/(${swarmTypeName}|\\*)\\/(${phaseName}|\\*)`;
-        const reg = new RegExp(regexString);
+        const genericKey = `*/${swarmTypeName}/${phaseName}`;
+        const particularKey = `${swarmId}/${swarmTypeName}/${phaseName}`;
 
-        const keys = Object.keys(listeners);
-        keys.forEach(key => {
-            if (key.match(reg)) {
-                const callbacks = listeners[key];
-                callbacks.forEach(cb => {
-                    cb.call(createThis(swarm), ...args);
-                });
-            }
+        const callbacks = listeners[particularKey] || listeners[genericKey] || [];
+
+        callbacks.forEach(cb => {
+            cb.call(createThis(swarm), ...args);
         });
 
         if (phaseName === $$.swarmEngine.RETURN_PHASE_COMMAND) {
