@@ -1,9 +1,12 @@
 function OuterIsolatePowerCord(energySource, numberOfWires = 1, apis) { // seed or array of constitution bundle paths
     const syndicate = require('../../syndicate');
+    const bootScripts = require('../bootScripts');
     let pool = null;
+
 
     function connectToEnergy() {
         const config = {
+            bootScript: bootScripts.getIsolatesBootScript(),
             maximumNumberOfWorkers: numberOfWires,
             workerOptions: {
                 workerData: {

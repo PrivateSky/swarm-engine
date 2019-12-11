@@ -32,7 +32,6 @@ assert.callback('interactionAttachToPriority', (callback) => {
             this.swarm("Agent007", "finally", input);
         }
     }).onReturn(function () {
-        console.log("Iaca");
         onReturnCalled = true;
     });
 

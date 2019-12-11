@@ -1,5 +1,6 @@
 function OuterThreadPowerCord(energySource, numberOfWires = 1) { // seed or array of constitution bundle paths
     const syndicate = require('../../syndicate');
+    const bootScripts = require('../bootScripts');
     let pool = null;
     let self = this;
 
@@ -7,7 +8,7 @@ function OuterThreadPowerCord(energySource, numberOfWires = 1) { // seed or arra
         const config = {
             maximumNumberOfWorkers: numberOfWires,
             workerStrategy: syndicate.WorkerStrategies.THREADS,
-            bootScriptPath: syndicate.getThreadBootScript(),
+            bootScript: bootScripts.getThreadBootScript(),
             workerOptions: {
                 // cwd: process.env.DOMAIN_WORKSPACE,
                 eval: true,
