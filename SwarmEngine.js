@@ -46,21 +46,6 @@ function SwarmEngine(identity) {
         powerCordCollection.delete(identity);
     };
 
-    protectedFunctions.startSwarmAs = function (identity, swarmTypeName, phaseName, ...args) {
-        const swarm = createBaseSwarm(swarmTypeName);
-        swarm.setMeta($$.swarmEngine.META_SECURITY_HOME_CONTEXT, myOwnIdentity);
-
-        protectedFunctions.sendSwarm(swarm, SwarmEngine.EXECUTE_PHASE_COMMAND, identity, phaseName, args);
-        return swarm;
-    };
-
-
-    /*    const InteractionRelay = require('./InteractionRelay');
-        const ir = new InteractionRelay();
-
-        protectedFunctions.on = ir.on;
-        protectedFunctions.off = ir.off;*/
-
     function relay(swarmSerialization) {
         try {
 
@@ -129,6 +114,32 @@ function SwarmEngine(identity) {
         return swarm;
     }
 
+    function cleanSwarmWaiter(swarmSerialisation) { // TODO: add better mechanisms to prevent memory leaks
+        let swarmId = swarmSerialisation.meta.swarmId;
+        let watcher = swarmInstancesCache[swarmId];
+
+        if (!watcher) {
+            $$.warn("Invalid swarm received: " + swarmId);
+            return;
+        }
+
+        let args = swarmSerialisation.meta.args;
+        args.push(swarmSerialisation);
+
+        watcher.callback.apply(null, args);
+        if (!watcher.keepAliveCheck()) {
+            delete swarmInstancesCache[swarmId];
+        }
+    }
+
+    protectedFunctions.startSwarmAs = function (identity, swarmTypeName, phaseName, ...args) {
+        const swarm = createBaseSwarm(swarmTypeName);
+        swarm.setMeta($$.swarmEngine.META_SECURITY_HOME_CONTEXT, myOwnIdentity);
+
+        protectedFunctions.sendSwarm(swarm, SwarmEngine.EXECUTE_PHASE_COMMAND, identity, phaseName, args);
+        return swarm;
+    };
+
     protectedFunctions.sendSwarm = function (swarmAsVO, command, identity, phaseName, args) {
 
         swarmAsVO.setMeta("phaseName", phaseName);
@@ -161,24 +172,6 @@ function SwarmEngine(identity) {
         //$$.uidGenerator.wait_for_condition(condition,doLogic);
         swarm.observe(doLogic, null, filter);
     };
-
-    function cleanSwarmWaiter(swarmSerialisation) { // TODO: add better mechanisms to prevent memory leaks
-        let swarmId = swarmSerialisation.meta.swarmId;
-        let watcher = swarmInstancesCache[swarmId];
-
-        if (!watcher) {
-            $$.warn("Invalid swarm received: " + swarmId);
-            return;
-        }
-
-        let args = swarmSerialisation.meta.args;
-        args.push(swarmSerialisation);
-
-        watcher.callback.apply(null, args);
-        if (!watcher.keepAliveCheck()) {
-            delete swarmInstancesCache[swarmId];
-        }
-    }
 
     protectedFunctions.execute_swarm = function (swarmOwM) {
 
@@ -224,18 +217,13 @@ function SwarmEngine(identity) {
                 $$.err(`Unrecognized swarm command ${swarmCommand}`);
         }
 
-
-        // if (swarmOwM.meta.command === "asyncReturn") {
-        //     let  co = $$.PSK_PubSub.publish($$.CONSTANTS.SWARM_RETURN, swarmOwM);
-        //     console.log("Subscribers listening on", $$.CONSTANTS.SWARM_RETURN, co);
-        //     // cleanSwarmWaiter(swarmSerialisation);
-        // } else if (swarmOwM.meta.command === "executeSwarmPhase") {
-        //     swarm.runPhase(swarmOwM.meta.phaseName, swarmOwM.meta.args);
-        // } else {
-        //     console.log("Unknown command", swarmOwM.meta.command, "in swarmSerialisation.meta.command");
-        // }
-        //
-        // return swarm;
+        protectedFunctions.acknowledge = function(method, swarmId, swarmName, swarmPhase){
+            powerCordCollection.forEach((powerCord, identity)=>{
+                if(typeof powerCord[method] === "function"){
+                    powerCord[method].call(powerCord, swarmId, swarmName, swarmPhase);
+                }
+            });
+        }
     };
 
     require("./swarms")(protectedFunctions);

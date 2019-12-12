@@ -1,7 +1,7 @@
 const outbound = "outbound";
 const inbound = "inbound";
 
-function RemoteDomainPowerCord(host, channelName, receivingHost, receivingChannelName){
+function RemoteChannelPairPowerCord(host, channelName, receivingHost, receivingChannelName){
 
     receivingHost = receivingHost || host;
     receivingChannelName = receivingChannelName || generateChannelName();
@@ -11,10 +11,10 @@ function RemoteDomainPowerCord(host, channelName, receivingHost, receivingChanne
         require("../../psk-http-client");
 
         //this should be a channel that exists... we don't try to create
-        $$.remote.registerPskHttpClient(outbound, host, channelName, {autoCreate: false});
+        $$.remote.registerHttpChannelClient(outbound, host, channelName, {autoCreate: false});
 
         //maybe instead of receivingChannelName we sould use our identity? :-??
-        $$.remote.registerPskHttpClient(inbound, receivingHost, receivingChannelName, {autoCreate: true});
+        $$.remote.registerHttpChannelClient(inbound, receivingHost, receivingChannelName, {autoCreate: true});
 
         $$.remote[outbound].setSenderMode();
         $$.remote[inbound].setReceiverMode.call(this);
@@ -38,4 +38,4 @@ function RemoteDomainPowerCord(host, channelName, receivingHost, receivingChanne
     });
 }
 
-module.exports = RemoteDomainPowerCord;
+module.exports = RemoteChannelPairPowerCord;
