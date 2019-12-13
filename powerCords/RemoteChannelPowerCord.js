@@ -5,19 +5,45 @@ function RemoteChannelPowerCord(receivingHost, receivingChannelName){
     receivingHost = receivingHost || host;
     receivingChannelName = receivingChannelName || generateChannelName();
 
-    function setup(){
+    let setup = ()=>{
         //injecting necessary http methods
         require("../../psk-http-client");
 
         //maybe instead of receivingChannelName we sould use our identity? :-??
         $$.remote.registerHttpChannelClient(inbound, receivingHost, receivingChannelName, {autoCreate: true});
+        $$.remote[inbound].setReceiverMode();
 
-        $$.remote[inbound].setReceiverMode.call(this);
-    }
+        this.on("*", "*", "*", (err, result)=>{
+            if(!err){
+                console.log("We got a swarm for channel");
+                this.transfer(result);
+            }else{
+                console.log("Got an error from our channel", err);
+            }
+        });
+    };
+
+    this.on = function(swarmId, swarmName, swarmPhase, callback){
+        $$.remote[inbound].on(swarmId, swarmName, swarmPhase, callback);
+    };
+
+    this.off = function(swarmId, swarmName, swarmPhase, callback){
+
+    };
 
     this.sendSwarm = function (swarmSerialization) {
+        const SwarmPacker = require("swarmutils").SwarmPacker;
+        let header = SwarmPacker.getHeader(swarmSerialization);
+        let target = header.swarmTarget;
+        console.log("Sending swarm back to", target);
+        //test if target is an url... else complain
+        if(true){
+            $$.remote.doHttpPost(target, swarmSerialization, (err, res)=>{
 
-        $$.remote[outbound].sendSwarm(swarmSerialization);
+            });
+        }else{
+
+        }
     };
 
     function generateChannelName(){

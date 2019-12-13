@@ -216,14 +216,14 @@ function SwarmEngine(identity) {
             default:
                 $$.err(`Unrecognized swarm command ${swarmCommand}`);
         }
+    };
 
-        protectedFunctions.acknowledge = function(method, swarmId, swarmName, swarmPhase){
-            powerCordCollection.forEach((powerCord, identity)=>{
-                if(typeof powerCord[method] === "function"){
-                    powerCord[method].call(powerCord, swarmId, swarmName, swarmPhase);
-                }
-            });
-        }
+    protectedFunctions.acknowledge = function(method, swarmId, swarmName, swarmPhase){
+        powerCordCollection.forEach((powerCord, identity)=>{
+            if(typeof powerCord[method] === "function"){
+                powerCord[method].call(powerCord, swarmId, swarmName, swarmPhase);
+            }
+        });
     };
 
     require("./swarms")(protectedFunctions);
