@@ -12,5 +12,6 @@ module.exports = {
     OuterThreadPowerCord: require("./powerCords/OuterThreadPowerCord"),
     InnerThreadPowerCord: require("./powerCords/InnerThreadPowerCord"),
     RemoteChannelPairPowerCord: require("./powerCords/RemoteChannelPairPowerCord"),
-    RemoteChannelPowerCord: require("./powerCords/RemoteChannelPowerCord")
+    RemoteChannelPowerCord: require("./powerCords/RemoteChannelPowerCord"),
+    SmartRemoteChannelPowerCord:require("./powerCords/SmartRemoteChannelPowerCord")
 };

@@ -218,10 +218,10 @@ function SwarmEngine(identity) {
         }
     };
 
-    protectedFunctions.acknowledge = function(method, swarmId, swarmName, swarmPhase){
+    protectedFunctions.acknowledge = function(method, swarmId, swarmName, swarmPhase, cb){
         powerCordCollection.forEach((powerCord, identity)=>{
             if(typeof powerCord[method] === "function"){
-                powerCord[method].call(powerCord, swarmId, swarmName, swarmPhase);
+                powerCord[method].call(powerCord, swarmId, swarmName, swarmPhase, cb);
             }
         });
     };

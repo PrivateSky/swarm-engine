@@ -35,7 +35,7 @@ function InteractionSpace(swarmEngineApi) {
             listeners[key] = [];
         }
         listeners[key].push(handler);
-        swarmEngineApi.acknowledge("on", swarmId, swarmTypeName, phaseName);
+        swarmEngineApi.acknowledge("on", swarmId, swarmTypeName, phaseName, handler);
     };
 
     this.off = function (swarmId = '*', swarmTypeName = '*', phaseName = '*', handler) {
@@ -63,7 +63,7 @@ function InteractionSpace(swarmEngineApi) {
                 }
             }
         });
-        swarmEngineApi.acknowledge("off", swarmId, swarmTypeName, phaseName);
+        swarmEngineApi.acknowledge("off", swarmId, swarmTypeName, phaseName, handler);
     };
 }
 
