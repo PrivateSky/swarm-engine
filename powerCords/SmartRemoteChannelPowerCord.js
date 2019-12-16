@@ -1,49 +1,66 @@
 const inbound = "inbound";
 
-function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName){
+function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, zeroMQAddress) {
 
     //here are stored, for later use, fav hosts for different identities
     const favoriteHosts = {};
-    let receivingHost = Array.isArray(communicationAddrs) && communicationAddrs.length>0 ? communicationAddrs[0] : "http://127.0.0.1";
+    let receivingHost = Array.isArray(communicationAddrs) && communicationAddrs.length > 0 ? communicationAddrs[0] : "http://127.0.0.1";
     receivingChannelName = receivingChannelName || generateChannelName();
 
-    let setup = ()=>{
+    let setup = () => {
         //injecting necessary http methods
         require("../../psk-http-client");
 
+        const opts = {autoCreate: true, enableForward: typeof zeroMQAddress !== "undefined", publicSignature: "none"};
+
         //maybe instead of receivingChannelName we sould use our identity? :-??
-        $$.remote.registerHttpChannelClient(inbound, receivingHost, receivingChannelName, {autoCreate: true});
+        $$.remote.registerHttpChannelClient(inbound, receivingHost, receivingChannelName, opts);
         $$.remote[inbound].setReceiverMode();
 
-        $$.remote[inbound].on("*", "*", "*", (err, swarmSerialization)=>{
-            if(err){
-                console.log("Got an error from our channel", err);
-                return;
-            }
+        if (typeof zeroMQAddress === "undefined") {
 
-            const swarmUtils = require("swarmutils");
-            const SwarmPacker = swarmUtils.SwarmPacker;
-            let header = SwarmPacker.getHeader(swarmSerialization);
-            if(header.swarmTarget === $$.remote[inbound].getReceiveAddress() && startedSwarms[header.swarmId] === true){
-                //it is a swarm that we started
-                let message = swarmUtils.OwM.prototype.convert(SwarmPacker.unpack(swarmSerialization));
-                //we set the correct target
-                message.setMeta("target", identityOfOurSwarmEngineInstance);
-                //... and transfer to our swarm engine instance
-                self.transfer(SwarmPacker.pack(message, SwarmPacker.getSerializer(header.serializationType)));
-            }else{
-                self.transfer(swarmSerialization);
-            }
-        });
+            $$.remote[inbound].on("*", "*", "*", (err, swarmSerialization) => {
+                if (err) {
+                    console.log("Got an error from our channel", err);
+                    return;
+                }
+                handlerSwarmSerialization(swarmSerialization);
+            });
+        } else {
+            //let's connect to zmq
+            const reqFactory = require("virtualmq").getVMQRequestFactory(receivingHost, zeroMQAddress);
+            reqFactory.receiveMessageFromZMQ($$.remote.base64Encode(receivingChannelName), opts.publicSignature, (...args) => {
+                console.log("zeromq connection status", ...args);
+            }, (channelName, swarmSerialization) => {
+                console.log("Look", channelName, swarmSerialization);
+                handlerSwarmSerialization(swarmSerialization);
+            });
+        }
     };
 
-   /* this.on = function(swarmId, swarmName, swarmPhase, callback){
-        $$.remote[inbound].on(swarmId, swarmName, swarmPhase, callback);
-    };
+    /* this.on = function(swarmId, swarmName, swarmPhase, callback){
+         $$.remote[inbound].on(swarmId, swarmName, swarmPhase, callback);
+     };
 
-    this.off = function(swarmId, swarmName, swarmPhase, callback){
+     this.off = function(swarmId, swarmName, swarmPhase, callback){
 
-    };*/
+     };*/
+
+    function handlerSwarmSerialization(swarmSerialization) {
+        const swarmUtils = require("swarmutils");
+        const SwarmPacker = swarmUtils.SwarmPacker;
+        let header = SwarmPacker.getHeader(swarmSerialization);
+        if (header.swarmTarget === $$.remote[inbound].getReceiveAddress() && startedSwarms[header.swarmId] === true) {
+            //it is a swarm that we started
+            let message = swarmUtils.OwM.prototype.convert(SwarmPacker.unpack(swarmSerialization));
+            //we set the correct target
+            message.setMeta("target", identityOfOurSwarmEngineInstance);
+            //... and transfer to our swarm engine instance
+            self.transfer(SwarmPacker.pack(message, SwarmPacker.getSerializer(header.serializationType)));
+        } else {
+            self.transfer(swarmSerialization);
+        }
+    }
 
     let identityOfOurSwarmEngineInstance;
     let startedSwarms = {};
@@ -54,7 +71,7 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName){
         let header = SwarmPacker.getHeader(swarmSerialization);
         let message = swarmUtils.OwM.prototype.convert(SwarmPacker.unpack(swarmSerialization));
 
-        if(typeof message.publicVars === "undefined") {
+        if (typeof message.publicVars === "undefined") {
             startedSwarms[message.getMeta("swarmId")] = true;
 
             //it is the start of swarm...
@@ -72,33 +89,33 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName){
         const urlRegex = new RegExp(/^(www|http:|https:)+[^\s]+[\w]/);
 
         if (urlRegex.test(target)) {
-            $$.remote.doHttpPost(target, swarmSerialization, (err, res)=>{
-                if(err){
+            $$.remote.doHttpPost(target, swarmSerialization, (err, res) => {
+                if (err) {
                     console.log(err);
                 }
             });
-        }else{
+        } else {
             deliverSwarmToRemoteChannel(target, swarmSerialization, 0);
         }
     };
 
-    function deliverSwarmToRemoteChannel(target, swarmSerialization, remoteIndex){
-        if(remoteIndex > communicationAddrs.length){
+    function deliverSwarmToRemoteChannel(target, swarmSerialization, remoteIndex) {
+        if (remoteIndex > communicationAddrs.length) {
             //end of the line
             console.log(`Unable to deliver swarm to target "${target}" on any of the remote addresses provided.`);
-            return ;
+            return;
         }
         const currentAddr = communicationAddrs[remoteIndex];
         //if we don't have a fav host for target then lets start discovery process...
-        const remoteChannelAddr = favoriteHosts[target] || [currentAddr, "send-message/", $$.remote.base64Encode(target)+"/"].join("");
+        const remoteChannelAddr = favoriteHosts[target] || [currentAddr, "send-message/", $$.remote.base64Encode(target) + "/"].join("");
 
-        $$.remote.doHttpPost(remoteChannelAddr, swarmSerialization, (err, res)=>{
-            if(err || res.statusCode !== 200){
+        $$.remote.doHttpPost(remoteChannelAddr, swarmSerialization, (err, res) => {
+            if (err || res.statusCode !== 200) {
                 console.log(err || res.statusCode);
-                setTimeout(()=>{
+                setTimeout(() => {
                     deliverSwarmToRemoteChannel(target, swarmSerialization, ++remoteIndex);
                 }, 10);
-            }else{
+            } else {
                 //success: found fav host for target
                 favoriteHosts[target] = remoteChannelAddr;
                 console.log("Found our fav", remoteChannelAddr, "for target", target);
@@ -106,14 +123,14 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName){
         });
     }
 
-    function generateChannelName(){
+    function generateChannelName() {
         return Math.random().toString(36).substr(2, 9);
     }
 
     return new Proxy(this, {
         set(target, p, value, receiver) {
             target[p] = value;
-            if(p === 'identity') {
+            if (p === 'identity') {
                 setup();
             }
         }
