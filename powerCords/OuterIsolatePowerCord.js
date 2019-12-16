@@ -5,9 +5,12 @@ function OuterIsolatePowerCord(energySource, numberOfWires = 1, apis) { // seed 
 
 
     function connectToEnergy() {
+        const WorkerStrategies = syndicate.WorkerStrategies;
+
         const config = {
             bootScript: bootScripts.getIsolatesBootScript(),
             maximumNumberOfWorkers: numberOfWires,
+            workerStrategy: WorkerStrategies.ISOLATES,
             workerOptions: {
                 workerData: {
                     constitutions: energySource
