@@ -46,6 +46,26 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
 
      };*/
 
+    function getMetaFromIdentity(identity){
+        const vRegex = /([a-zA-Z0-9]*|.)*\/agent\/([a-zA-Z0-9]+(\/)*)+/g;
+
+        if(!identity.match(vRegex)){
+            throw new Error("Invalid format. (Eg. domain[.subdomain]*/agent/[organisation/]*agentId)");
+        }
+
+        const separatorKeyword = "/agent/";
+        let domain;
+        let agentIdentity;
+
+        const splitPoint = identity.indexOf(separatorKeyword);
+        if(splitPoint !== -1){
+            domain = identity.slice(0, splitPoint);
+            agentIdentity = identity.slice(splitPoint+separatorKeyword.length);
+        }
+
+        return {domain, agentIdentity};
+    }
+
     function handlerSwarmSerialization(swarmSerialization) {
         const swarmUtils = require("swarmutils");
         const SwarmPacker = swarmUtils.SwarmPacker;
@@ -100,6 +120,13 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
     };
 
     function deliverSwarmToRemoteChannel(target, swarmSerialization, remoteIndex) {
+        let identityMeta;
+        try{
+            identityMeta = getMetaFromIdentity(target);
+        }catch(err){
+           console.log(err);
+        }
+
         if (remoteIndex > communicationAddrs.length) {
             //end of the line
             console.log(`Unable to deliver swarm to target "${target}" on any of the remote addresses provided.`);
@@ -107,7 +134,7 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
         }
         const currentAddr = communicationAddrs[remoteIndex];
         //if we don't have a fav host for target then lets start discovery process...
-        const remoteChannelAddr = favoriteHosts[target] || [currentAddr, "send-message/", $$.remote.base64Encode(target) + "/"].join("");
+        const remoteChannelAddr = favoriteHosts[identityMeta.domain] || [currentAddr, "send-message/", $$.remote.base64Encode(identityMeta.domain) + "/"].join("");
 
         $$.remote.doHttpPost(remoteChannelAddr, swarmSerialization, (err, res) => {
             if (err || res.statusCode !== 200) {
@@ -117,7 +144,7 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
                 }, 10);
             } else {
                 //success: found fav host for target
-                favoriteHosts[target] = remoteChannelAddr;
+                favoriteHosts[identityMeta.domain] = remoteChannelAddr;
                 console.log("Found our fav", remoteChannelAddr, "for target", target);
             }
         });

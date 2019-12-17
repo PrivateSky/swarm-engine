@@ -254,11 +254,11 @@ function makePluggable(powerCord) {
 
     Object.defineProperty(powerCord, "identity", {
         set: (value) => {
-            if(typeof this.__identity === "undefined"){
-                this.__identity = value;
+            if(typeof powerCord.__identity === "undefined"){
+                powerCord.__identity = value;
             }
         }, get: () => {
-            return this.__identity;
+            return powerCord.__identity;
         }
     });
 
