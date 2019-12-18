@@ -35,7 +35,7 @@ function RemoteChannelPowerCord(receivingHost, receivingChannelName){
         const SwarmPacker = require("swarmutils").SwarmPacker;
         let header = SwarmPacker.getHeader(swarmSerialization);
         let target = header.swarmTarget;
-        console.log("Sending swarm back to", target);
+        console.log("Sending swarm to", target);
         //test if target is an url... else complain
         if(true){
             $$.remote.doHttpPost(target, swarmSerialization, (err, res)=>{

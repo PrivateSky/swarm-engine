@@ -13,12 +13,12 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
 
         const opts = {autoCreate: true, enableForward: typeof zeroMQAddress !== "undefined", publicSignature: "none"};
 
+        console.log(`\n[***] Using channel "${receivingChannelName}" on "${receivingHost}".\n`);
         //maybe instead of receivingChannelName we sould use our identity? :-??
         $$.remote.registerHttpChannelClient(inbound, receivingHost, receivingChannelName, opts);
         $$.remote[inbound].setReceiverMode();
 
         if (typeof zeroMQAddress === "undefined") {
-
             $$.remote[inbound].on("*", "*", "*", (err, swarmSerialization) => {
                 if (err) {
                     console.log("Got an error from our channel", err);
@@ -105,7 +105,7 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
         }
 
         let target = header.swarmTarget;
-        console.log("Sending swarm back to", target);
+        console.log("Sending swarm to", target);
         const urlRegex = new RegExp(/^(www|http:|https:)+[^\s]+[\w]/);
 
         if (urlRegex.test(target)) {
@@ -124,7 +124,8 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
         try{
             identityMeta = getMetaFromIdentity(target);
         }catch(err){
-           console.log(err);
+            //identityMeta = {};
+            console.log(err);
         }
 
         if (remoteIndex > communicationAddrs.length) {
@@ -137,8 +138,7 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
         const remoteChannelAddr = favoriteHosts[identityMeta.domain] || [currentAddr, "send-message/", $$.remote.base64Encode(identityMeta.domain) + "/"].join("");
 
         $$.remote.doHttpPost(remoteChannelAddr, swarmSerialization, (err, res) => {
-            if (err || res.statusCode !== 200) {
-                console.log(err || res.statusCode);
+            if (err) {
                 setTimeout(() => {
                     deliverSwarmToRemoteChannel(target, swarmSerialization, ++remoteIndex);
                 }, 10);
