@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PSK web</title>
+    <script src="../../../../psknode/bundles/webshims.js"></script>
+    <script src="../../../../psknode/bundles/pskruntime.js"></script>
+</head>
+<body>
+<script>
+    const se = pskruntimeRequire("swarm-engine");
+    se.initialise("domain");
+
+    const powerCordToDomain = new se.SmartRemoteChannelPowerCord(["http://127.0.0.1:8080/", "http://127.0.0.1:1080/", "http://127.0.0.1:2080/"], "domain");
+    $$.swarmEngine.plug("*", powerCordToDomain);
+    $$.swarms.describe("echo", {
+        say: function(){
+            this.return("For sure it works!");
+        }
+    });
+</script>
+</body>
+</html>
