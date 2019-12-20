@@ -18,12 +18,27 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
         $$.remote.registerHttpChannelClient(inbound, receivingHost, receivingChannelName, opts);
         $$.remote[inbound].setReceiverMode();
 
+        function toArrayBuffer(buffer) {
+            const ab = new ArrayBuffer(buffer.length);
+            const view = new Uint8Array(ab);
+            for (let i = 0; i < buffer.length; ++i) {
+                view[i] = buffer[i];
+            }
+            return ab;
+        }
+
+
         if (typeof zeroMQAddress === "undefined") {
             $$.remote[inbound].on("*", "*", "*", (err, swarmSerialization) => {
                 if (err) {
                     console.log("Got an error from our channel", err);
                     return;
                 }
+
+                if(Buffer && Buffer.isBuffer(swarmSerialization)){
+                    swarmSerialization = toArrayBuffer(swarmSerialization);
+                }
+
                 handlerSwarmSerialization(swarmSerialization);
             });
         } else {
@@ -128,7 +143,7 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
             console.log(err);
         }
 
-        if (remoteIndex > communicationAddrs.length) {
+        if (remoteIndex >= communicationAddrs.length) {
             //end of the line
             console.log(`Unable to deliver swarm to target "${target}" on any of the remote addresses provided.`);
             return;
