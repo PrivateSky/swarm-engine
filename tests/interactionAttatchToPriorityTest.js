@@ -1,5 +1,6 @@
 const se = require("../index");
 require("./../../../psknode/bundles/pskruntime");
+require("./../../../psknode/bundles/psknode");
 const dc = require('../../double-check');
 const assert = dc.assert;
 const path = require("path");
