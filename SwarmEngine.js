@@ -46,7 +46,7 @@ function SwarmEngine(identity) {
         powerCordCollection.delete(identity);
     };
 
-    function relay(swarmSerialization) {
+    function relay(swarmSerialization, ignoreMyIdentity) {
         try {
 
             const swarmutils = require('swarmutils');
@@ -57,10 +57,12 @@ function SwarmEngine(identity) {
             const swarmHeader = SwarmPacker.getHeader(swarmSerialization);
             const swarmTargetIdentity = swarmHeader.swarmTarget;
 
-            if (myOwnIdentity === swarmTargetIdentity) {
-                const deserializedSwarm = OwM.prototype.convert(SwarmPacker.unpack(swarmSerialization));
-                protectedFunctions.execute_swarm(deserializedSwarm);
-                return;
+            if(typeof ignoreMyIdentity === "undefined" || !ignoreMyIdentity){
+                if (myOwnIdentity === swarmTargetIdentity || myOwnIdentity === "*") {
+                    const deserializedSwarm = OwM.prototype.convert(SwarmPacker.unpack(swarmSerialization));
+                    protectedFunctions.execute_swarm(deserializedSwarm);
+                    return;
+                }
             }
 
             const targetPowerCord = powerCordCollection.get(swarmTargetIdentity) || powerCordCollection.get(SwarmEngine.prototype.WILD_CARD_IDENTITY);
@@ -147,7 +149,7 @@ function SwarmEngine(identity) {
         swarmAsVO.setMeta("command", command);
         swarmAsVO.setMeta("args", args);
 
-        relay(serialize(swarmAsVO));
+        relay(serialize(swarmAsVO), true);
     };
 
     protectedFunctions.waitForSwarm = function (callback, swarm, keepAliveCheck) {

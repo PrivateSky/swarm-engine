@@ -1,5 +1,6 @@
 function boot() {
-    const {parentPort, workerData} = require('worker_threads');
+    const worker_threads ='worker_threads';
+    const {parentPort, workerData} = require(worker_threads);
 
     process.on("uncaughtException", (err) => {
         console.error('unchaughtException inside worker', err);
