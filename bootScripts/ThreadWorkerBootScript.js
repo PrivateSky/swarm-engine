@@ -35,9 +35,9 @@ function boot() {
             require(currentConstitution);
             loadNextConstitution(constitutionList,index + 1);
         } else {
-            const pskadmin = require('pskadmin');
+            const pskdomain = require('pskdomain');
 
-            pskadmin.loadCSB(currentConstitution, (err, csbBlockChain) => {
+            pskdomain.loadCSB(currentConstitution, (err, csbBlockChain) => {
                 if(err) {
                     throw err;
                 }
