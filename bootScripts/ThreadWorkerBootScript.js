@@ -22,16 +22,64 @@ function boot() {
 
     $$.swarmEngine.plug($$.swarmEngine.WILD_CARD_IDENTITY, powerCord);
 
-    for (const constitution of workerData.constitutions) {
-        require(constitution);
+
+    function loadNextConstitution(constitutionList, index = 0) {
+        if(index === constitutionList.length) {
+            finishedLoadingConstitution();
+            return;
+        }
+
+        const currentConstitution = constitutionList[index];
+
+        if(currentConstitution.endsWith('.js')) {
+            require(currentConstitution);
+            loadNextConstitution(constitutionList,index + 1);
+        } else {
+            const pskadmin = require('pskadmin');
+
+            pskadmin.loadCSB(currentConstitution, (err, csbBlockChain) => {
+                if(err) {
+                    throw err;
+                }
+
+                csbBlockChain.listFiles('constitutions', (err, files) => {
+                    if(err) {
+                        throw err;
+                    }
+
+                    function processNextFile(filesIndex = 0) {
+                        if(filesIndex === files.length) {
+                            loadNextConstitution(constitutionList, index + 1);
+                            return;
+                        }
+
+                        csbBlockChain.readFile(files[filesIndex], (err, fileBuffer) => {
+                            if(err) {
+                                throw err;
+                            }
+
+                            let res = eval(fileBuffer.toString());
+                            processNextFile(filesIndex + 1);
+                        })
+                    }
+
+                    processNextFile();
+                })
+            });
+
+        }
     }
 
+    loadNextConstitution(workerData.constitutions);
+
+    function finishedLoadingConstitution() {
+        parentPort.postMessage('ready');
+    }
 
     parentPort.on('message', (packedSwarm) => {
         powerCord.transfer(packedSwarm);
     });
 
-    parentPort.postMessage('ready');
 }
 
 module.exports = boot.toString();
