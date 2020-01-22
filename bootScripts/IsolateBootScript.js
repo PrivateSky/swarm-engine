@@ -1,5 +1,5 @@
 
-async function getIsolatesWorker({workerData: {constitutions}}) {
+async function getIsolatesWorker({workerData: {constitutions}, externalApi}) {
     const swarmUtils = require('swarmutils');
     const beesHealer = swarmUtils.beesHealer;
     const OwM = swarmUtils.OwM;
@@ -21,7 +21,8 @@ async function getIsolatesWorker({workerData: {constitutions}}) {
     const isolate = await IsolatedVM.getDefaultIsolate({
         shimsBundle: constitutions[0],
         browserifyBundles: constitutions.slice(1),
-        config: config
+        config: config,
+        externalApi: externalApi
     });
 
     class IsolatesWrapper extends EventEmitter {

@@ -14,7 +14,8 @@ function OuterIsolatePowerCord(energySource, numberOfWires = 1, apis) { // seed 
             workerOptions: {
                 workerData: {
                     constitutions: energySource
-                }
+                },
+                externalApi: apis
             }
         };
 
@@ -22,14 +23,6 @@ function OuterIsolatePowerCord(energySource, numberOfWires = 1, apis) { // seed 
 
             isolate.globalSetSync("getIdentity", () => {
                 return superThis.identity;
-            });
-
-            if (!apis) {
-                return
-            }
-
-            Object.keys(apis).forEach(fnName => {
-                isolate.globalSetSync(fnName, apis[fnName]);
             });
         });
 
