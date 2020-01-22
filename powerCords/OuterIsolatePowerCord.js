@@ -7,6 +7,15 @@ function OuterIsolatePowerCord(energySource, numberOfWires = 1, apis) { // seed 
     function connectToEnergy() {
         const WorkerStrategies = syndicate.WorkerStrategies;
 
+        if(!apis) {
+            apis = {};
+        }
+
+        apis.require = function(name) {
+            console.log('Creating proxy for', name);
+            return this.createDeepReference(require(name), this.ivm);
+        };
+
         const config = {
             bootScript: bootScripts.getIsolatesBootScript(),
             maximumNumberOfWorkers: numberOfWires,
