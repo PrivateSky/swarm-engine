@@ -4,5 +4,8 @@ module.exports = {
     },
     getThreadBootScript: function() {
         return `(${require("./ThreadWorkerBootScript")})()`;
+    },
+    executeDomainBootScript: function() {
+        return require('./domainBootScript');
     }
 };
