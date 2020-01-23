@@ -16,3 +16,8 @@ module.exports = {
     SmartRemoteChannelPowerCord:require("./powerCords/SmartRemoteChannelPowerCord"),
     BootScripts: require('./bootScripts')
 };
+//TODO: use proper context flag from overwrite-require
+if (true/*typeof document !== "undefined"*/) {
+    module.exports.IframePowerCord = require("./powerCords/browser/IframePowerCord");
+    module.exports.HostPowerCord = require("./powerCords/browser/HostPowerCord");
+}
