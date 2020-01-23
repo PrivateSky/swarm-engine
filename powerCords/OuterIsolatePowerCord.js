@@ -1,6 +1,7 @@
 function OuterIsolatePowerCord(energySource, numberOfWires = 1, apis) { // seed or array of constitution bundle paths
     const syndicate = require('../../syndicate');
     const bootScripts = require('../bootScripts');
+    const pskisolates = require('pskisolates');
     let pool = null;
 
 
@@ -11,10 +12,12 @@ function OuterIsolatePowerCord(energySource, numberOfWires = 1, apis) { // seed 
             apis = {};
         }
 
-        apis.require = function(name) {
-            console.log('Creating proxy for', name);
-            return this.createDeepReference(require(name), this.ivm);
-        };
+        if(typeof apis.require === "undefined"){
+            apis.require = function(name) {
+                console.log('Creating proxy for', name);
+                return pskisolates.createDeepReference(require(name));
+            };
+        }
 
         const config = {
             bootScript: bootScripts.getIsolatesBootScript(),
