@@ -1,6 +1,7 @@
 const se = require("../index");
+require("./../../../psknode/bundles/testsRuntime");
 require("./../../../psknode/bundles/pskruntime");
-const dc = require('../../double-check');
+const dc = require('double-check');
 const assert = dc.assert;
 const path = require("path");
 
@@ -10,7 +11,7 @@ const constitution = [
 ];
 
 se.initialise();
-const powerCord = new se.OuterThreadPowerCord(constitution);
+const powerCord = new se.OuterThreadPowerCord(path.join(__dirname, '../../../psknode/bundles/threadBoot.js'), constitution);
 
 $$.swarmEngine.plug("Agent007", powerCord);
 
