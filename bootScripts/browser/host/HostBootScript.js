@@ -1,19 +1,34 @@
-function HostBootScript() {
-    console.log("Booting host...")
+function HostBootScript(seed) {
+
+    console.log("Booting host...");
     let se, IframePC;
     const seeds = {};
 
-    if (typeof $$.swarmEngine === "undefined") {
-        se = require("swarm-engine");
-        se.initialise("parent");
-        IframePC = se.IframePowerCord;
+    function initaliseSwarmEngine(){
+        if (typeof $$.swarmEngine !== "undefined") {
+            //se = require("swarm-engine");
+            //se.initialise("parent");
+            IframePC = se.IframePowerCord;
 
-        $$.swarms.describe("seed", {
-            enter: function(identity){
-                this.return(null, seeds[identity]);
-            }
-        });
+            $$.swarms.describe("seed", {
+                enter: function(identity){
+                    this.return(null, seeds[identity]);
+                }
+            });
+        }
     }
+    let hostPskDomain = require("../lib/BrowserPskDomain").getBrowserPskDomain();
+    hostPskDomain.getConstitutionFilesFromBar(seed, (err, constitutionBundles) =>{
+        if(!err){
+            constitutionBundles.forEach(bundle => eval(bundle.toString()));
+
+            initaliseSwarmEngine();
+        }
+        else{
+            console.log(err);
+        }
+    });
+
 
 
     this.createPowerCord = function (identity, seed, iframe) {
