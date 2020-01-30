@@ -1,30 +1,32 @@
-function BootEngine(seed) {
-    let config = {
-        brickStorageName: 'bootEngineBrickStorage',
-        edfsEndpoint: 'http://localhost:8080'
-    };
+function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, constitutionBundles) {
+
+    if(typeof getSeed !== "function"){
+        throw new Error("getSeed missing or not a function");
+    }
+    getSeed = promisify(getSeed);
+
+    if(typeof getEDFS !== "function"){
+        throw new Error("getEDFS missing or not a function");
+    }
+    getEDFS = promisify(getEDFS);
+
+    if(typeof initializeSwarmEngine !== "function"){
+        throw new Error("initializeSwarmEngine missing or not a function");
+    }
+    initializeSwarmEngine = promisify(initializeSwarmEngine);
+
+    if(typeof runtimeBundles !== "undefined" && !Array.isArray(runtimeBundles)){
+        throw new Error("runtimeBundles is not array");
+    }
+
+    if(typeof constitutionBundles !== "undefined" && !Array.isArray(constitutionBundles)){
+        throw new Error("constitutionBundles is not array");
+    }
 
     const EDFS = require('edfs');
     let edfs;
 
-    this.prepareEnv = function () {
-        edfs = EDFS.attach(this.getTransportStrategy());
-    };
-
-    this.getTransportStrategy = function () {
-        $$.brickTransportStrategiesRegistry.add(config.brickStorageName, new EDFS.HTTPBrickTransportStrategy(config.edfsEndpoint));
-        return config.brickStorageName;
-    };
-
-    this.retrieveArchive = function () {
-        return edfs.loadBar(seed);
-    };
-
-    this.evalBundles = async function (bundles) {
-        if (!Array.isArray(bundles)) {
-            throw new Error('Bundles should be an array');
-        }
-
+    async function evalBundles (bundles) {
         const listFiles = promisify(this.bar.listFiles);
         const readFile = promisify(this.bar.readFile);
 
@@ -40,32 +42,16 @@ function BootEngine(seed) {
             const fileContent = await readFile(fileList[i]);
             eval(fileContent.toString());
         }
-    };
-
-    this.setRuntimeBundles = function (...bundles) {
-        config.runtimeBundles = bundles;
-    };
-
-    this.getConfig = function () {
-        //to be used with caution
-        return this.config;
-    };
-
-    this.initializeSwarmEngine = function(){
-        throw new Error("Implement this");
-    };
-
-    this.setConstitutionBundles = function(...bundles){
-        config.constitutionBundles = bundles;
-    };
+    }
 
     this.boot = function (callback) {
        const __boot = async () => {
-            this.prepareEnv();
-            this.bar = this.retrieveArchive();
-            await this.evalBundles(config.runtimeBundles);
-            this.initializeSwarmEngine();
-            await this.evalBundles(config.constitutionBundles);
+            const seed = await getSeed();
+            edfs = await getEDFS();
+            this.bar = edfs.loadBar(seed);
+            await evalBundles(runtimeBundles);
+            await initializeSwarmEngine();
+            await evalBundles(constitutionBundles);
         };
 
         __boot()
@@ -88,9 +74,4 @@ function promisify(fn) {
     }
 }
 
-module.exports={
-    createBootEngine : function(seed){
-        return new BootEngine(seed);
-    },
-    promisify
-};
+module.exports = BootEngine;
