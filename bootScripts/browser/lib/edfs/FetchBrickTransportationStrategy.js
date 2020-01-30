@@ -11,6 +11,9 @@ function FetchBrickTransportStrategy(initialConfig) {
             },
             body: data
         }).then(function(response) {
+            if(response.status>=400){
+                return callback(new Error(`An error occurred ${response.statusText}`))
+            }
             return response.json();
         }).then(function(data) {
             callback(null, data)
@@ -28,9 +31,11 @@ function FetchBrickTransportStrategy(initialConfig) {
                 'Content-Type': 'application/octet-stream'
             },
         }).then(response=>{
+            if(response.status>=400){
+                return callback(new Error(`An error occurred ${response.statusText}`))
+            }
             return response.arrayBuffer();
         }).then(arrayBuffer=>{
-
                 let buffer = new Buffer(arrayBuffer.byteLength);
                 let view = new Uint8Array(arrayBuffer);
                 for (let i = 0; i < buffer.length; ++i) {
@@ -51,6 +56,9 @@ function FetchBrickTransportStrategy(initialConfig) {
                 'Content-Type': 'application/octet-stream'
             },
         }).then(response => {
+            if(response.status>=400){
+                return callback(new Error(`An error occurred ${response.statusText}`))
+            }
             return response.json().then(data => {
                 callback(null, data);
             }).catch(error => {

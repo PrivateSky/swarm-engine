@@ -5,7 +5,7 @@ function BrowserPskDomain(edfsURL){
     const hasHttpStrategyRegistered = $$.brickTransportStrategiesRegistry.has(FETCH_BRICK_STORAGE_STRATEGY_NAME);
 
     if (!hasHttpStrategyRegistered) {
-        let CreateFetchBrickTransportationStrategy = require("./edfs/CreateFetchBrickTransportationStrategy");
+        let CreateFetchBrickTransportationStrategy = require("./edfs/FetchBrickTransportationStrategy");
         let FetchBrickTransportationStrategy = new CreateFetchBrickTransportationStrategy(edfsURL);
         $$.brickTransportStrategiesRegistry.add(FETCH_BRICK_STORAGE_STRATEGY_NAME, FetchBrickTransportationStrategy);
     }
