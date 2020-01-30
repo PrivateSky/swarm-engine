@@ -26,7 +26,7 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
     const EDFS = require('edfs');
     let edfs;
 
-    async function evalBundles (bundles) {
+    const evalBundles = async (bundles) => {
         const listFiles = promisify(this.bar.listFiles);
         const readFile = promisify(this.bar.readFile);
 
@@ -42,7 +42,7 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
             const fileContent = await readFile(fileList[i]);
             eval(fileContent.toString());
         }
-    }
+    };
 
     this.boot = function (callback) {
        const __boot = async () => {
