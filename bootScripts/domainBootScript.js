@@ -1,6 +1,7 @@
 const path = require('path');
 
 const seed = process.env.PSK_DOMAIN_SEED;
+console.log("SuperSeed", seed);
 process.env.PSK_DOMAIN_SEED = undefined;
 process.env.PRIVATESKY_DOMAIN_NAME = "AnonymousDomain" + process.pid;
 
@@ -20,12 +21,64 @@ if (typeof config.workspace !== "undefined" && config.workspace !== "undefined")
 function boot(){
     const BootEngine = require("./BootEngine");
 
-    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js"]);
-    bootter.boot((err, archive)=>{
+    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "virtualMQ.js"], ["blockchain.js"]);
+    bootter.boot(function(err, archive){
         if(err){
             console.log(err);
             return;
         }
+        try{
+            plugPowerCords();
+        }catch(err){
+            console.log("Caught an error will finishing booting process", err);
+        }
+    })
+}
+
+function getSeed(callback){
+    callback(undefined, self.seed);
+}
+
+let self = {seed};
+function getEDFS(callback){
+    let EDFS = require("edfs");
+    self.edfs = EDFS.attachFromSeed(seed);
+    callback(undefined, self.edfs);
+}
+
+function initializeSwarmEngine(callback){
+    const EDFS = require("edfs");
+    const bar = self.edfs.loadBar(self.seed);
+    bar.readFile(EDFS.constants.CSB.DOMAIN_IDENTITY_FILE, (err, content)=>{
+        if(err){
+            return callback(err);
+        }
+        self.domainName = content.toString();
+        $$.log(`Domain ${self.domainName} is booting...`);
+
+        $$.PSK_PubSub = require("soundpubsub").soundPubSub;
+        const se = require("swarm-engine");
+        se.initialise(self.domainName);
+
+        callback();
+    });
+}
+
+function plugPowerCords(){
+    self.edfs.loadCSB(self.seed, (err, csb)=>{
+        if(err){
+            return console.log("Failed to boot properly domain!!");
+        }
+
+        self.myCSB = csb;
+        const se = require("swarm-engine");
+
+        let domainConfigs = self.myCSB.loadAssets("DomainConfig");
+        if(domainConfigs.length === 0){
+            console.log("No domain configuration found in CSB. Boot process will stop here...");
+            return;
+        }
+        self.domainConf = domainConfigs[0];
 
         for (const alias in self.domainConf.communicationInterfaces) {
             if (self.domainConf.communicationInterfaces.hasOwnProperty(alias)) {
@@ -52,42 +105,6 @@ function boot(){
 
         $$.event('status.domains.boot', {name: self.domainConf.alias});
         console.log("Domain boot successfully");
-    })
-}
-
-function getSeed(callback){
-    callback(undefined, self.seed);
-}
-
-let self = {seed};
-function getEDFS(callback){
-    let EDFS = require("edfs");
-    self.edfs = EDFS.attachFromSeed(seed);
-    callback(undefined, self.edfs);
-}
-
-function initializeSwarmEngine(callback){
-    self.edfs.loadCSB(self.seed, (err, csb)=>{
-        if(err){
-            return callback(err);
-        }
-        self.myCSB = csb;
-
-        require("swarmutils").pingPongFork.enableLifeLine(1000);
-        let domainConfigs = self.myCSB.loadAssets("DomainConfig");
-        if(domainConfigs.length === 0){
-            console.log("No domain configuration found in CSB. Boot process will stop here...");
-            return;
-        }
-        self.domainConf = domainConfigs[0];
-
-        $$.log(`Booting domain ... ${self.domainConf.alias}`);
-
-        $$.PSK_PubSub = require("soundpubsub").soundPubSub;
-        const se = pskruntimeRequire("swarm-engine");
-        se.initialise(self.domainConf.alias);
-
-        callback();
     });
 }
 

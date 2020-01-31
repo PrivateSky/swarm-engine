@@ -46,12 +46,14 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
 
     this.boot = function (callback) {
        const __boot = async () => {
-            const seed = await getSeed();
-            edfs = await getEDFS();
-            this.bar = edfs.loadBar(seed);
-            await evalBundles(runtimeBundles);
-            await initializeSwarmEngine();
-            await evalBundles(constitutionBundles);
+           const seed = await getSeed();
+           edfs = await getEDFS();
+           this.bar = edfs.loadBar(seed);
+           await evalBundles(runtimeBundles);
+           await initializeSwarmEngine();
+           if (typeof constitutionBundles !== "undefined") {
+               await evalBundles(constitutionBundles);
+           }
         };
 
         __boot()
