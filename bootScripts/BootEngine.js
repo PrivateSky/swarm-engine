@@ -35,7 +35,7 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
             .map(bundle => `${EDFS.constants.CSB.CONSTITUTION_FOLDER}/${bundle}`);
 
         if (fileList.length !== bundles.length) {
-            throw new Error(`Some bundles missing. We found only the following ${fileList}`);
+            throw new Error(`Some bundles missing. Expected to have ${JSON.stringify(bundles)} but got only ${JSON.stringify(fileList)}`);
         }
 
         for (let i = 0; i < fileList.length; i++) {
