@@ -9,77 +9,51 @@ function boot() {
         }, 100);
     });
 
-    if (!workerData.hasOwnProperty('constitutions')) {
-        throw new Error(`Did not receive the correct configuration in worker data ${JSON.stringify(workerData)}`);
+    function getSeed(callback){
+        let err;
+        if (!workerData.hasOwnProperty('constitutionSeed') || typeof workerData.constitutionSeed !== "string") {
+            err = new Error(`Missing or wrong type of constitutionSeed in worker data configuration: ${JSON.stringify(workerData)}`);
+            if(!callback){
+                throw err;
+            }
+        }
+        if(callback){
+            return callback(err, workerData.constitutionSeed);
+        }
+        return workerData.constitutionSeed;
     }
 
-    const firstConstitution = workerData.constitutions.shift();
-    require(firstConstitution);
-    const swarmEngine = require('swarm-engine');
-
-    swarmEngine.initialise(process.env.IDENTITY);
-    const powerCord = new swarmEngine.InnerThreadPowerCord();
-
-    $$.swarmEngine.plug($$.swarmEngine.WILD_CARD_IDENTITY, powerCord);
-
-
-    function loadNextConstitution(constitutionList, index = 0) {
-        if(index === constitutionList.length) {
-            finishedLoadingConstitution();
-            return;
-        }
-
-        const currentConstitution = constitutionList[index];
-
-        if(currentConstitution.endsWith('.js')) {
-            require(currentConstitution);
-            loadNextConstitution(constitutionList,index + 1);
-        } else {
-            const pskdomain = require('pskdomain');
-
-            pskdomain.loadCSB(currentConstitution, (err, csbBlockChain) => {
-                if(err) {
-                    throw err;
-                }
-
-                csbBlockChain.listFiles('constitutions', (err, files) => {
-                    if(err) {
-                        throw err;
-                    }
-
-                    function processNextFile(filesIndex = 0) {
-                        if(filesIndex === files.length) {
-                            loadNextConstitution(constitutionList, index + 1);
-                            return;
-                        }
-
-                        csbBlockChain.readFile(files[filesIndex], (err, fileBuffer) => {
-                            if(err) {
-                                throw err;
-                            }
-
-                            let res = eval(fileBuffer.toString());
-                            processNextFile(filesIndex + 1);
-                        })
-                    }
-
-                    processNextFile();
-                })
-            });
-
-        }
+    let edfs;
+    function getEDFS(callback){
+        const EDFS = require("edfs");
+        edfs = EDFS.attachFromSeed(getSeed());
+        callback(null, edfs);
     }
 
-    loadNextConstitution(workerData.constitutions);
+    function initializeSwarmEngine(callback){
+        const swarmEngine = require('swarm-engine');
 
-    function finishedLoadingConstitution() {
+        swarmEngine.initialise(process.env.IDENTITY);
+        const powerCord = new swarmEngine.InnerThreadPowerCord();
+
+        $$.swarmEngine.plug($$.swarmEngine.WILD_CARD_IDENTITY, powerCord);
+
+        parentPort.on('message', (packedSwarm) => {
+            powerCord.transfer(packedSwarm);
+        });
+
+        callback();
+    }
+
+    const BootEngine = require("./BootEngine.js");
+
+    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js"], ["blockchain.js"]);
+
+    bootter.boot(() => {
         parentPort.postMessage('ready');
-    }
-
-    parentPort.on('message', (packedSwarm) => {
-        powerCord.transfer(packedSwarm);
     });
 
 }
 
-module.exports = boot.toString();
+boot();
+//module.exports = boot.toString();

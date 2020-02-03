@@ -1,7 +1,6 @@
 const path = require('path');
 
 const seed = process.env.PSK_DOMAIN_SEED;
-console.log("SuperSeed", seed);
 process.env.PSK_DOMAIN_SEED = undefined;
 process.env.PRIVATESKY_DOMAIN_NAME = "AnonymousDomain" + process.pid;
 
