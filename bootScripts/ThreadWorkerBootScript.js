@@ -1,5 +1,4 @@
 function boot() {
-    console.log("Boot called!");
     const worker_threads ='worker_threads';
     const {parentPort, workerData} = require(worker_threads);
 
@@ -44,8 +43,6 @@ function boot() {
         });
 
         callback();
-        console.log("Swarm enegine initialized");
-
     }
 
     const BootEngine = require("./BootEngine.js");
