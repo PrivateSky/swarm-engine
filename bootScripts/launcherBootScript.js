@@ -13,8 +13,8 @@ process.on("uncaughtException", (err) => {
 });
 
 
-let tmpDir = "/home/stefancosmin/psk/privatesky-consensus/tmp";
-let confDir = "/home/stefancosmin/psk/privatesky-consensus/conf";
+let tmpDir = path.resolve(path.join(__dirname, "../../tmp"));
+let confDir = path.resolve(path.join(__dirname, "../../conf"));
 let seed;
 
 if (process.argv.length >= 3) {
@@ -35,7 +35,7 @@ fs.mkdirSync(basePath, {recursive: true});
 const codeFolder = path.normalize(__dirname + "/../");
 
 if (!process.env.PRIVATESKY_ROOT_FOLDER) {
-    process.env.PRIVATESKY_ROOT_FOLDER = '/home/stefancosmin/psk/privatesky-consensus';
+    process.env.PRIVATESKY_ROOT_FOLDER = path.resolve(path.join(__dirname, '../../'));
 }
 
 function boot(){
@@ -142,7 +142,7 @@ function launch(csb) {
             });
 
             const swarmutils = require('swarmutils');
-            const child = swarmutils.pingPongFork.fork('../bundles/domainBoot.js', [name], {
+            const child = swarmutils.pingPongFork.fork(path.resolve(path.join(__dirname, '../bundles/domainBoot.js')), [name], {
                 cwd: __dirname,
                 env: child_env
             });
