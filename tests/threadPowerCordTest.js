@@ -5,13 +5,10 @@ const dc = require('double-check');
 const assert = dc.assert;
 const path = require("path");
 
-const constitution = [
-    path.join(__dirname, '../../../psknode/bundles/pskruntime.js'),
-    path.join(__dirname, "swarmCollection/basicSwarm.js")
-];
+const constitutionSeed = "5gsxzWXL%2F4YebrIqsBAyuIpp95APysth4%2FctieO4b6Y%3D%7CImh0dHA6Ly9sb2NhbGhvc3Q6ODA4MCI%3De";
 
 se.initialise();
-const powerCord = new se.OuterThreadPowerCord(path.join(__dirname, '../../../psknode/bundles/threadBoot.js'), constitution);
+const powerCord = new se.OuterThreadPowerCord(path.join(__dirname, "../../../psknode/bundles/threadBoot.js"), false, constitutionSeed);
 
 $$.swarmEngine.plug("Agent007", powerCord);
 
@@ -41,5 +38,5 @@ assert.callback('interactionAttachToPriority', (callback) => {
         assert.true(onReturnCalled, '.onReturn was not called');
         assert.false(attachToCalled, '.attachTo({interactResponse}) was called, but for this swarm it should have been overwritten by .on({interactResponse})');
         callback();
-    }, 1000);
-}, 1500);
+    }, 10000);
+}, 15000);

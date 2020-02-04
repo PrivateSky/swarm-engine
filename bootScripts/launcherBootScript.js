@@ -2,9 +2,7 @@
 //the first argument is a path to a configuration folder
 //the second argument is a path to a temporary folder
 const path = require('path');
-
-// require("./utils/pingpongFork").enableLifeLine(1000);
-
+require("../../../psknode/core/utils/pingpongFork.js").enableLifeLine(1000);
 
 const fs = require('fs');
 
@@ -12,25 +10,25 @@ process.on("uncaughtException", (err) => {
     console.log('err', err);
 });
 
-
-let tmpDir = path.resolve(path.join(__dirname, "../../tmp"));
-let confDir = path.resolve(path.join(__dirname, "../../conf"));
+//TODO: replace process.cwd() call with something static like process.env.PSK_INSTALLATION_ROOT or something
+let tmpDir = path.resolve(path.join(process.cwd(), "../tmp"));
+let confDir = path.resolve(path.join(process.cwd(), "/conf"));
 let seed;
 
 if (process.argv.length >= 3) {
     seed = process.argv[2];
 }
-
-if (process.argv.length >= 4) {
+console.log("Seed", process.argv);
+/*if (process.argv.length >= 4) {
     tmpDir = path.resolve(process.argv[3]);
-}
+}*/
 
 if (!process.env.PRIVATESKY_TMP) {
     process.env.PRIVATESKY_TMP = tmpDir;
 }
 
 const basePath = tmpDir;
-fs.mkdirSync(basePath, {recursive: true});
+//fs.mkdirSync(basePath, {recursive: true});
 
 const codeFolder = path.normalize(__dirname + "/../");
 
@@ -130,6 +128,7 @@ function launch(csb) {
 
             child_env.PRIVATESKY_TMP = process.env.PRIVATESKY_TMP;
             child_env.PRIVATESKY_ROOT_FOLDER = process.env.PRIVATESKY_ROOT_FOLDER;
+
             child_env.PSK_DOMAIN_SEED = env.config.constitution;
             child_env.config = JSON.stringify({
                 workspace: env.config.workspace
