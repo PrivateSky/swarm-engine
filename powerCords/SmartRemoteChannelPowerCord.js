@@ -45,7 +45,7 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
             //let's connect to zmq
             const reqFactory = require("virtualmq").getVMQRequestFactory(receivingHost, zeroMQAddress);
             reqFactory.receiveMessageFromZMQ($$.remote.base64Encode(receivingChannelName), opts.publicSignature, (...args) => {
-                console.log("zeromq connection status", ...args);
+                console.log("zeromq connection established");
             }, (channelName, swarmSerialization) => {
                 console.log("Look", channelName, swarmSerialization);
                 handlerSwarmSerialization(swarmSerialization);
