@@ -1,4 +1,6 @@
 const path = require('path');
+//enabling life line to parent process
+require(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "psknode/core/utils/pingpongFork.js")).enableLifeLine();
 
 const seed = process.env.PSK_DOMAIN_SEED;
 process.env.PSK_DOMAIN_SEED = undefined;
