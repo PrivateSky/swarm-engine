@@ -3,8 +3,14 @@ const path = require('path');
 require(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "psknode/core/utils/pingpongFork.js")).enableLifeLine();
 
 const seed = process.env.PSK_DOMAIN_SEED;
+//preventing children to access the env parameter
 process.env.PSK_DOMAIN_SEED = undefined;
-process.env.PRIVATESKY_DOMAIN_NAME = "AnonymousDomain" + process.pid;
+
+if(process.argv.length > 3){
+    process.env.PRIVATESKY_DOMAIN_NAME = process.argv[2];
+}else{
+    process.env.PRIVATESKY_DOMAIN_NAME = "AnonymousDomain" + process.pid;
+}
 
 process.env.PRIVATESKY_TMP = path.resolve(process.env.PRIVATESKY_TMP || "../tmp");
 process.env.DOMAIN_WORKSPACE = path.resolve(process.env.PRIVATESKY_TMP, "domainsWorkspace", process.env.PRIVATESKY_DOMAIN_NAME);
