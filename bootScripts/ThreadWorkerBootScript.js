@@ -31,6 +31,7 @@ function boot() {
     }
 
     function initializeSwarmEngine(callback){
+        require('callflow').initialise();
         const swarmEngine = require('swarm-engine');
 
         swarmEngine.initialise(process.env.IDENTITY);
@@ -47,7 +48,7 @@ function boot() {
 
     const BootEngine = require("./BootEngine.js");
 
-    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js"], ["blockchain.js"]);
+    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js"], ["blockchain.js", 'constitution.js']);
 
     bootter.boot(() => {
         parentPort.postMessage('ready');

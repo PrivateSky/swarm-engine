@@ -101,17 +101,23 @@ function plugPowerCords(){
             agents.push({alias: 'system'});
         }
 
-        agents.forEach(agent => {
-            const agentPC = new se.OuterThreadPowerCord(["../bundles/pskruntime.js",
-                "../bundles/psknode.js",
-                "../bundles/edfsBar.js",
-                process.env.PRIVATESKY_DOMAIN_CONSTITUTION
-            ]);
-            $$.swarmEngine.plug(`${self.domainConf.alias}/agent/${agent.alias}`, agentPC);
+        const EDFS = require("edfs");
+        const bar = self.edfs.loadBar(self.seed);
+        bar.readFile(EDFS.constants.CSB.CONSTITUTION_FOLDER + '/threadBoot.js', (err, fileContents) => {
+            if(err) {
+                throw err;
+            }
+
+            agents.forEach(agent => {
+                const agentPC = new se.OuterThreadPowerCord(fileContents.toString(), true, seed);
+                $$.swarmEngine.plug(`${self.domainConf.alias}/agent/${agent.alias}`, agentPC);
+            });
+
+            $$.event('status.domains.boot', {name: self.domainConf.alias});
+            console.log("Domain boot successfully");
         });
 
-        $$.event('status.domains.boot', {name: self.domainConf.alias});
-        console.log("Domain boot successfully");
+
     });
 }
 
