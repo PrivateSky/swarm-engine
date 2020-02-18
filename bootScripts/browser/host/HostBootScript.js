@@ -7,7 +7,7 @@ function HostBootScript(seed) {
      this.boot = function(callback){
         const BootEngine = require("../../BootEngine");
 
-        const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["webshims","pskruntime.js"],["bindableModel.js"]);
+        const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["webshims.js","pskruntime.js"],["bindableModel.js"]);
         bootter.boot((err, archive)=>{
             if(err){
                 console.log(err);
@@ -18,8 +18,8 @@ function HostBootScript(seed) {
             // - un seed pentru csb-ul referentiat(ssapp)
             // - numele aplicatiei (e.g My Tenders)
 
-            const csbReferences = self.myCSB.loadAssets('CSBReference');
-            callback(null, csbReferences);
+            //const csbReferences = self.myCSB.loadAssets('CSBReference');
+            callback(null);
 
         })
     };
