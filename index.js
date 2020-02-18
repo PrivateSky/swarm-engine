@@ -16,8 +16,10 @@ module.exports = {
     SmartRemoteChannelPowerCord:require("./powerCords/SmartRemoteChannelPowerCord"),
     BootScripts: require('./bootScripts')
 };
-//TODO: use proper context flag from overwrite-require
-if (true/*typeof document !== "undefined"*/) {
+
+const or = require("overwrite-require");
+const browserContexts = [or.constants.BROWSER_ENVIRONMENT_TYPE, or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE];
+if (browserContexts.indexOf($$.environmentType) !== -1) {
     module.exports.IframePowerCord = require("./powerCords/browser/IframePowerCord");
     module.exports.HostPowerCord = require("./powerCords/browser/HostPowerCord");
 }
