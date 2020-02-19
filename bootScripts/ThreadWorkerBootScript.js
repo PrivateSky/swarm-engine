@@ -48,9 +48,12 @@ function boot() {
 
     const BootEngine = require("./BootEngine.js");
 
-    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js"], ["blockchain.js", 'constitution.js']);
+    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js"], ["blockchain.js", "domain.js"]);
 
-    bootter.boot(() => {
+    bootter.boot((err) => {
+        if(err){
+            throw err;
+        }
         parentPort.postMessage('ready');
     });
 
