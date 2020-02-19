@@ -1,9 +1,9 @@
-HostBootScript = require("../sw-host/HostBootScript");
+HostBootScript = require("./HostBootScript");
 let bootScript = null;
 
 
 self.addEventListener('activate', function (event) {
-    console.log("Activating service worker", event);
+    console.log("Activating host service worker", event);
 
     try {
         clients.claim();
@@ -12,14 +12,13 @@ self.addEventListener('activate', function (event) {
     }
 });
 
-self.addEventListener('message', function(event) {
-    if(event.target instanceof ServiceWorkerGlobalScope){
-        if(event.data.action ==="activate"){
+self.addEventListener('message', function (event) {
+    if (event.target instanceof ServiceWorkerGlobalScope) {
+        if (event.data.action === "activate") {
             event.ports[0].postMessage({status: 'empty'});
         }
 
-        if(event.data.seed){
-            //TODO: check if this is not the same code with swHostScript
+        if (event.data.seed) {
             bootScript = new HostBootScript(event.data.seed);
             bootScript.boot((err, archive) => {
                 archive.listFiles("app", (err, files) => {
