@@ -1,4 +1,5 @@
-HostBootScript = require("./HostBootScript");
+const HostBootScript = require("./HostBootScript");
+const MimeType = require("../lib/MimeType");
 let bootScript = null;
 let csbArchive = null;
 
@@ -27,15 +28,20 @@ self.addEventListener('message', function (event) {
                     console.log(files);
                     csbArchive.readFile("app/index.html", (err, content) => {
 
-                        let blob = new Blob([content], {type: "text/html"});
+                        let blob = new Blob([content.toString()], {type: "text/html;charset=utf-8"});
+
                         let response = new Response(blob, {"status": 200, "statusText": "ok"});
 
+                        console.log(response);
                         caches.open('v1').then((cache) => {
-                            let currentIndexLocation = `${window.location.origin}/index.html`;
+                            let currentIndexLocation = `${event.data.url}`;
                             cache.put(currentIndexLocation, response);
+
+                            event.ports[0].postMessage({status: 'finished', content:content.toString()});
                         });
 
-                        console.log(content.toString());
+
+                        //console.log(content.toString());
                     })
                 })
             });
@@ -55,31 +61,10 @@ let getAppFile = function(request){
                 if(err){
                     reject(err);
                 }else{
-                    let mimeType;
-                    switch (appFile.substring(appFile.lastIndexOf(".") + 1)) {
-                        case "css":
-                            mimeType = "text/css";
-                            break;
-                        case "js":
-                            mimeType = "text/javascript";
-                            break;
-                        case "html":
-                            mimeType = "text/html";
-                            break;
-                        case "png":
-                            mimeType = "image/png";
-                            break;
-                        case "gif":
-                            mimeType = "image/gif";
-                            break;
-                        case "json":
-                            mimeType = "application/json";
-                            break;
-                        default:
-                            mimeType = "text/plain";
-                    }
+                    let fileExtension = appFile.substring(appFile.lastIndexOf(".") + 1);
+                    let mimeType = MimeType.getMimeTypeFromExtension(fileExtension);
 
-                    let blob = new Blob([content], {type: mimeType});
+                    let blob = new Blob([mimeType.binary ? content : content.toString()], {type: mimeType.name});
                     let response = new Response(blob, {"status": 200, "statusText": "ok"});
                     resolve(response);
                 }
@@ -88,23 +73,27 @@ let getAppFile = function(request){
 };
 
 
-
 self.addEventListener('fetch', (event) => {
+
+    let   cacheAndRelayResponse = function(response){
+        let responseClone = response.clone();
+        caches.open('v1').then((cache) => {
+            cache.put(event.request, responseClone);
+        });
+
+        return response;
+    };
 
     if(csbArchive){
         event.respondWith(
             caches.match(event.request).then((resp) => {
-
-                return resp || fetch(event.request).then((response) => {
-                    let responseClone = response.clone();
-                    caches.open('v1').then((cache) => {
-                        cache.put(event.request, responseClone);
-                    });
-
-                    return response;
-                });
+                return resp || getAppFile(event.request).then(cacheAndRelayResponse);
             }).catch(() => {
-                return caches.match('./sw-test/gallery/myLittleVader.jpg');
+                console.log("Not found in csb app or cache");
+                return fetch(event.request).then(cacheAndRelayResponse).catch(() => {
+                    console.error("Could not fulfill request");
+                });
+
             })
         );
     }
