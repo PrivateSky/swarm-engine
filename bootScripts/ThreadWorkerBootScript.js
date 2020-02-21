@@ -48,13 +48,18 @@ function boot() {
 
     const BootEngine = require("./BootEngine.js");
 
-    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js"], ["blockchain.js", "domain.js"]);
+    const booter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js"], ["blockchain.js", "domain.js"]);
 
-    bootter.boot((err) => {
+    booter.boot((err) => {
         if(err){
             throw err;
         }
-        parentPort.postMessage('ready');
+        edfs.bootCSB(self.seed, (err, csbhandler) =>{
+            if(err){
+                $$.throwError(err);
+            }
+            parentPort.postMessage('ready');
+        })
     });
 
 }
