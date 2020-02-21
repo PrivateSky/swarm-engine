@@ -40,9 +40,9 @@ function HostBootScript(seed) {
         const hasHttpStrategyRegistered = $$.brickTransportStrategiesRegistry.has(FETCH_BRICK_STORAGE_STRATEGY_NAME);
 
         if (!hasHttpStrategyRegistered) {
-            let CreateFetchBrickTransportationStrategy = require("edfs").FetchBrickTransportationStrategy;
-            let FetchBrickTransportationStrategy = new CreateFetchBrickTransportationStrategy(seed.getEndpoint());
-            $$.brickTransportStrategiesRegistry.add(FETCH_BRICK_STORAGE_STRATEGY_NAME, FetchBrickTransportationStrategy);
+            let FetchBrickTransportStrategy = require("edfs").FetchBrickTransportStrategy;
+            let fetchStrategy = new FetchBrickTransportStrategy(seed.getEndpoint());
+            $$.brickTransportStrategiesRegistry.add(FETCH_BRICK_STORAGE_STRATEGY_NAME, fetchStrategy);
         }
         self.edfs = EDFS.attach(FETCH_BRICK_STORAGE_STRATEGY_NAME);
         callback(undefined, self.edfs);
