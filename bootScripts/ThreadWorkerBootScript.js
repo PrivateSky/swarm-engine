@@ -43,25 +43,24 @@ function boot() {
             powerCord.transfer(packedSwarm);
         });
 
-        callback();
+        edfs.bootCSB(workerData.constitutionSeed, (err, csbhandler) =>{
+            if(err){
+                $$.throwError(err);
+            }
+            callback();
+        });
     }
 
     const BootEngine = require("./BootEngine.js");
 
-    const booter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js"], ["blockchain.js", "domain.js"]);
+    const booter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "blockchain.js"], ["domain.js"]);
 
     booter.boot((err) => {
         if(err){
             throw err;
         }
-        edfs.bootCSB(self.seed, (err, csbhandler) =>{
-            if(err){
-                $$.throwError(err);
-            }
-            parentPort.postMessage('ready');
-        })
+        parentPort.postMessage('ready');
     });
-
 }
 
 boot();
