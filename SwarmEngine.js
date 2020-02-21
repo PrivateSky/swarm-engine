@@ -190,7 +190,7 @@ function SwarmEngine(identity) {
 
                 if (instance) {
                     swarm = instance.swarm;
-                    swarm.update(swarmOwM);
+                    swarm.actualize(swarmOwM);
 
                 } else {
                     if (typeof $$.blockchain !== "undefined") {
@@ -202,7 +202,7 @@ function SwarmEngine(identity) {
                     if (!swarm) {
                         throw new Error(`Unknown swarm with type <${swarmType}>. Check if this swarm is defined in the domain constitution!`);
                     } else {
-                        swarm.update(swarmOwM);
+                        swarm.actualize(swarmOwM);
                     }
 
                     /*swarm = $$.swarm.start(swarmType, swarmSerialisation);*/
