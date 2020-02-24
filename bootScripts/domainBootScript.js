@@ -49,7 +49,7 @@ function getSeed(callback){
 let self = {seed};
 function getEDFS(callback){
     let EDFS = require("edfs");
-    self.edfs = EDFS.attachFromSeed(seed);
+    self.edfs = EDFS.attachWithSeed(seed);
     callback(undefined, self.edfs);
 }
 

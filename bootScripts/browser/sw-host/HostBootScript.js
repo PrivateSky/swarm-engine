@@ -35,7 +35,7 @@ function HostBootScript(seed) {
         let SEED = require("bar").Seed;
         const seed = new SEED(self.seed);
 
-        //self.edfs = EDFS.attachFromSeed(seed);
+        //self.edfs = EDFS.attachWithSeed(seed);
 
         const hasHttpStrategyRegistered = $$.brickTransportStrategiesRegistry.has(FETCH_BRICK_STORAGE_STRATEGY_NAME);
 

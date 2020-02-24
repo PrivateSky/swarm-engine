@@ -26,7 +26,7 @@ function boot() {
     let edfs;
     function getEDFS(callback){
         const EDFS = require("edfs");
-        edfs = EDFS.attachFromSeed(getSeed());
+        edfs = EDFS.attachWithSeed(getSeed());
         callback(null, edfs);
     }
 
