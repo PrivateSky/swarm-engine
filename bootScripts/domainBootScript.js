@@ -72,7 +72,7 @@ function initializeSwarmEngine(callback){
 }
 
 function plugPowerCords(){
-    self.edfs.loadCSB(self.seed, (err, csb)=>{
+    self.edfs.bootCSB(self.seed, (err, csb)=>{
         if(err){
             return console.log("Failed to boot properly domain!!");
         }
