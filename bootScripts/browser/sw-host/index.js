@@ -25,7 +25,7 @@ self.addEventListener('message', function (event) {
             bootScript.boot((err, archive) => {
                 csbArchive = archive;
                 csbArchive.listFiles("app", (err, files) => {
-                    if (files.length > 0 && files["app/index.html"]) {
+                    if (files.length > 0 && files.indexOf("app/index.html")!==1) {
                         csbArchive.readFile("app/index.html", (err, content) => {
 
                             let blob = new Blob([content.toString()], {type: "text/html;charset=utf-8"});
