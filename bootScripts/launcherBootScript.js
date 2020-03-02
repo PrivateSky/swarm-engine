@@ -22,7 +22,7 @@ function boot(){
             return;
         }
 
-        self.edfs.loadCSB(self.seed, (err, csb) => {
+        self.edfs.bootCSB(self.seed, (err, csb) => {
             if (err) {
                 throw err;
             }
@@ -48,7 +48,9 @@ function getEDFS(callback){
 }
 
 function initializeSwarmEngine(callback){
-    setTimeout(callback, 0);
+    const se = require("swarm-engine");
+    se.initialise();
+    callback();
 }
 
 boot();
