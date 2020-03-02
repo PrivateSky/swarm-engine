@@ -25,24 +25,31 @@ self.addEventListener('message', function (event) {
             bootScript.boot((err, archive) => {
                 csbArchive = archive;
                 csbArchive.listFiles("app", (err, files) => {
-                    console.log(files);
-                    csbArchive.readFile("app/index.html", (err, content) => {
+                    if (files.length > 0 && files["app/index.html"]) {
+                        csbArchive.readFile("app/index.html", (err, content) => {
 
-                        let blob = new Blob([content.toString()], {type: "text/html;charset=utf-8"});
+                            let blob = new Blob([content.toString()], {type: "text/html;charset=utf-8"});
 
-                        let response = new Response(blob, {"status": 200, "statusText": "ok"});
+                            let response = new Response(blob, {"status": 200, "statusText": "ok"});
 
-                        console.log(response);
-                        caches.open('v1').then((cache) => {
-                            let currentIndexLocation = `${event.data.url}`;
-                            cache.put(currentIndexLocation, response);
+                            caches.open('v1').then((cache) => {
+                                let currentIndexLocation = `${event.data.url}`;
+                                cache.put(currentIndexLocation, response);
 
-                            event.ports[0].postMessage({status: 'finished', content:content.toString()});
-                        });
+                                event.ports[0].postMessage({status: 'finished', content: content.toString()});
+                            });
+                        })
+                    } else {
+                        event.ports[0].postMessage({error: 'No app found'});
+                        self.registration.unregister()
+                            .then(function () {
+                                return self.clients.matchAll();
+                            })
+                            .then(function (clients) {
+                                clients.forEach(client => client.navigate(client.url));
+                            });
+                    }
 
-
-                        //console.log(content.toString());
-                    })
                 })
             });
 
@@ -51,31 +58,31 @@ self.addEventListener('message', function (event) {
 });
 
 
-let getAppFile = function(request){
-    return new Promise((resolve, reject)=>{
-            console.log("Request",request.url);
-            let url = new URL(request.url);
-            let appFile = "app"+url.pathname;
-            console.log(appFile);
-            csbArchive.readFile(appFile,(err, content)=>{
-                if(err){
-                    reject(err);
-                }else{
-                    let fileExtension = appFile.substring(appFile.lastIndexOf(".") + 1);
-                    let mimeType = MimeType.getMimeTypeFromExtension(fileExtension);
+let getAppFile = function (request) {
+    return new Promise((resolve, reject) => {
+        console.log("Request", request.url);
+        let url = new URL(request.url);
+        let appFile = "app" + url.pathname;
+        console.log(appFile);
+        csbArchive.readFile(appFile, (err, content) => {
+            if (err) {
+                reject(err);
+            } else {
+                let fileExtension = appFile.substring(appFile.lastIndexOf(".") + 1);
+                let mimeType = MimeType.getMimeTypeFromExtension(fileExtension);
 
-                    let blob = new Blob([mimeType.binary ? content : content.toString()], {type: mimeType.name});
-                    let response = new Response(blob, {"status": 200, "statusText": "ok"});
-                    resolve(response);
-                }
-            });
+                let blob = new Blob([mimeType.binary ? content : content.toString()], {type: mimeType.name});
+                let response = new Response(blob, {"status": 200, "statusText": "ok"});
+                resolve(response);
+            }
+        });
     });
 };
 
 
 self.addEventListener('fetch', (event) => {
 
-    let   cacheAndRelayResponse = function(response){
+    let cacheAndRelayResponse = function (response) {
         let responseClone = response.clone();
         caches.open('v1').then((cache) => {
             cache.put(event.request, responseClone);
@@ -84,7 +91,7 @@ self.addEventListener('fetch', (event) => {
         return response;
     };
 
-    if(csbArchive){
+    if (csbArchive) {
         event.respondWith(
             caches.match(event.request).then((resp) => {
                 return resp || getAppFile(event.request).then(cacheAndRelayResponse);
