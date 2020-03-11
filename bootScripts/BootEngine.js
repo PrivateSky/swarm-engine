@@ -26,7 +26,7 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
     const EDFS = require('edfs');
     let edfs;
 
-    const evalBundles = async (bundles) => {
+    const evalBundles = async (bundles, ignore) => {
         const listFiles = promisify(this.bar.listFiles);
         const readFile = promisify(this.bar.readFile);
 
@@ -35,11 +35,16 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
             .map(bundle => `${EDFS.constants.CSB.CONSTITUTION_FOLDER}/${bundle}`);
 
         if (fileList.length !== bundles.length) {
-            throw new Error(`Some bundles missing. Expected to have ${JSON.stringify(bundles)} but got only ${JSON.stringify(fileList)}`);
+            const message = `Some bundles missing. Expected to have ${JSON.stringify(bundles)} but got only ${JSON.stringify(fileList)}`;
+            if(!ignore){
+                throw new Error(message);
+            }else{
+                console.log(message);
+            }
         }
 
         for (let i = 0; i < fileList.length; i++) {
-            const fileContent = await readFile(fileList[i]);
+            var fileContent = await readFile(fileList[i]);
             eval(fileContent.toString());
         }
     };
@@ -52,7 +57,7 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
            await evalBundles(runtimeBundles);
            await initializeSwarmEngine();
            if (typeof constitutionBundles !== "undefined") {
-               await evalBundles(constitutionBundles);
+               await evalBundles(constitutionBundles, true);
            }
         };
 

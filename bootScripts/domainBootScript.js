@@ -28,7 +28,7 @@ if (typeof config.workspace !== "undefined" && config.workspace !== "undefined")
 function boot(){
     const BootEngine = require("./BootEngine");
 
-    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "virtualMQ.js"], ["blockchain.js"]);
+    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "virtualMQ.js", "edfsBar.js"], ["blockchain.js"]);
     bootter.boot(function(err, archive){
         if(err){
             console.log(err);
@@ -72,52 +72,58 @@ function initializeSwarmEngine(callback){
 }
 
 function plugPowerCords(){
-    self.edfs.bootCSB(self.seed, (err, csb)=>{
+    const dossier = require("dossier");
+    dossier.load(self.seed, "DomainIdentity", function(err, dossierHandler){
         if(err){
-            return console.log("Failed to boot properly domain!!");
+            throw err;
         }
 
-        self.myCSB = csb;
-        const se = require("swarm-engine");
-
-        let domainConfigs = self.myCSB.loadAssets("DomainConfig");
-        if(domainConfigs.length === 0){
-            console.log("No domain configuration found in CSB. Boot process will stop here...");
-            return;
-        }
-        self.domainConf = domainConfigs[0];
-
-        for (const alias in self.domainConf.communicationInterfaces) {
-            if (self.domainConf.communicationInterfaces.hasOwnProperty(alias)) {
-                let remoteUrls = self.domainConf.communicationInterfaces[alias];
-                let powerCordToDomain = new se.SmartRemoteChannelPowerCord([remoteUrls.virtualMQ + "/"], self.domainConf.alias, remoteUrls.zeroMQ);
-                $$.swarmEngine.plug("*", powerCordToDomain);
-            }
-        }
-
-        const agents = self.myCSB.loadAssets('Agent');
-
-        if (agents.length === 0) {
-            agents.push({alias: 'system'});
-        }
-
-        const EDFS = require("edfs");
-        const bar = self.edfs.loadBar(self.seed);
-        bar.readFile(EDFS.constants.CSB.CONSTITUTION_FOLDER + '/threadBoot.js', (err, fileContents) => {
-            if(err) {
-                throw err;
+        dossierHandler.startTransaction("DomainConfigTransaction", "getDomains").onReturn(function(err, domainConfigs){
+            if(err){
+                throw  err;
             }
 
-            agents.forEach(agent => {
-                const agentPC = new se.OuterThreadPowerCord(fileContents.toString(), true, seed);
-                $$.swarmEngine.plug(`${self.domainConf.alias}/agent/${agent.alias}`, agentPC);
+            const se = require("swarm-engine");
+            if(domainConfigs.length === 0){
+                console.log("No domain configuration found in CSB. Boot process will stop here...");
+                return;
+            }
+            self.domainConf = domainConfigs[0];
+
+            for (const alias in self.domainConf.communicationInterfaces) {
+                if (self.domainConf.communicationInterfaces.hasOwnProperty(alias)) {
+                    let remoteUrls = self.domainConf.communicationInterfaces[alias];
+                    let powerCordToDomain = new se.SmartRemoteChannelPowerCord([remoteUrls.virtualMQ + "/"], self.domainConf.alias, remoteUrls.zeroMQ);
+                    $$.swarmEngine.plug("*", powerCordToDomain);
+                }
+            }
+
+            dossierHandler.startTransaction("Agents", "getAgents").onReturn(function(err, agents){
+                if(err){
+                    throw err;
+                }
+
+                if (agents.length === 0) {
+                    agents.push({alias: 'system'});
+                }
+
+                const EDFS = require("edfs");
+                const bar = self.edfs.loadBar(self.seed);
+                bar.readFile(EDFS.constants.CSB.CONSTITUTION_FOLDER + '/threadBoot.js', (err, fileContents) => {
+                    if(err) {
+                        throw err;
+                    }
+
+                    agents.forEach(agent => {
+                        const agentPC = new se.OuterThreadPowerCord(fileContents.toString(), true, seed);
+                        $$.swarmEngine.plug(`${self.domainConf.alias}/agent/${agent.alias}`, agentPC);
+                    });
+
+                    $$.event('status.domains.boot', {name: self.domainConf.alias});
+                    console.log("Domain boot successfully");
+                });
             });
-
-            $$.event('status.domains.boot', {name: self.domainConf.alias});
-            console.log("Domain boot successfully");
-        });
-
-
+        })
     });
 }
 

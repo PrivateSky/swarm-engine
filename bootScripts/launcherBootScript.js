@@ -14,7 +14,7 @@ console.log(`Launcher is using ${seed} as SEED`);
 function boot(){
     const BootEngine = require("./BootEngine");
 
-    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "virtualMQ.js"], ["blockchain.js"]);
+    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "virtualMQ.js", "edfsBar.js"], ["blockchain.js"]);
     $$.log("Launcher booting process started");
     bootter.boot(function(err, archive){
         if(err){
@@ -48,11 +48,13 @@ function getEDFS(callback){
 }
 
 function initializeSwarmEngine(callback){
-    const se = require("swarm-engine");
-    se.initialise();
+    dossier = require("dossier");
+    /*const se = require("swarm-engine");
+    se.initialise();*/
     callback();
 }
 
+let dossier;
 boot();
 
 
@@ -63,19 +65,29 @@ function launch(csb) {
 
     const domains = {};
 
-    let domainReferences = csb.loadAssets("DomainReference");
-    domainReferences.forEach(domainReference => {
-        launchDomain(domainReference.alias, domainReference);
-    });
+    dossier.load(csb.getSeed(), "launcherIdentity", function(err, dossierHandler){
+        if(err){
+            throw err;
+        }
+        dossierHandler.startTransaction("Domain", "getDomains").onReturn(function(err, domainsRefs){
+            if(err){
+                throw err;
+            }
 
-    if (domains.length === 0) {
-        console.log(`\n[::] No domains were deployed.\n`);
-    }
+            domainsRefs.forEach(domainRef => {
+                launchDomain(domainRef.alias, domainRef);
+            });
+
+            if (domains.length === 0) {
+                console.log(`\n[::] No domains were deployed.\n`);
+            }
+        });
+    });
 
     function launchDomain(name, configuration) {
         if (!domains.hasOwnProperty(name)) {
             console.log(`Launcher is starting booting process for domain <${name}>`);
-            const env = {config: JSON.parse(JSON.stringify(beesHealer.asJSON(configuration).publicVars))};
+            const env = {config: configuration};
             const child_env = JSON.parse(JSON.stringify(process.env));
 
             child_env.PRIVATESKY_TMP = process.env.PRIVATESKY_TMP;
