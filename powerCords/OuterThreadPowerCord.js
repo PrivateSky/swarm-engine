@@ -1,5 +1,5 @@
 function OuterThreadPowerCord(threadBootScript, eval= false, energySourceSeed, numberOfWires = 1) { // seed or array of constitution bundle paths
-    const syndicate = require('../../syndicate');
+    const syndicate = require('syndicate');
     let pool = null;
     let self = this;
 
