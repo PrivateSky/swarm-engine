@@ -27,10 +27,10 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
     let edfs;
 
     const evalBundles = async (bundles, ignore) => {
-        const listFiles = promisify(this.bar.listFiles);
-        const readFile = promisify(this.bar.readFile);
+        const listFiles = promisify(this.rawDossier.listFiles);
+        const readFile = promisify(this.rawDossier.readFile);
 
-        let fileList = await listFiles(EDFS.constants.CSB.CONSTITUTION_FOLDER);
+        let fileList = await listFiles("/"+EDFS.constants.CSB.CONSTITUTION_FOLDER);
         fileList = bundles.filter(bundle => fileList.includes(`${EDFS.constants.CSB.CONSTITUTION_FOLDER}/${bundle}`))
             .map(bundle => `${EDFS.constants.CSB.CONSTITUTION_FOLDER}/${bundle}`);
 
@@ -53,7 +53,7 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
        const __boot = async () => {
            const seed = await getSeed();
            edfs = await getEDFS();
-           this.bar = edfs.loadBar(seed);
+           this.rawDossier = edfs.loadRawDossier(seed);
            await evalBundles(runtimeBundles);
            await initializeSwarmEngine();
            if (typeof constitutionBundles !== "undefined") {
@@ -62,7 +62,7 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
         };
 
         __boot()
-            .then(() => callback(undefined, this.bar))
+            .then(() => callback(undefined, this.rawDossier))
             .catch(callback);
     };
 }
