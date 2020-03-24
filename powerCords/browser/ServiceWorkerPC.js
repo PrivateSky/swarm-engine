@@ -1,6 +1,6 @@
-const UtilFunctions = require("../../bootScripts/browser/utils/utilFunctions");
+const UtilFunctions = require("../../utils/utilFunctions");
 function ServiceWorkerPC() {
-    const channelsManager = require("../../bootScripts/browser/lib/ChannelsManager").getChannelsManager();
+    const channelsManager = require("../../utils/SWChannelsManager").getChannelsManager();
     const SwarmPacker = require("swarmutils").SwarmPacker;
     const server = require("ssapp-middleware").getMiddleware();
 

@@ -1,7 +1,7 @@
 const server = require("ssapp-middleware").getMiddleware();
 HostBootScript = require("../sw-host/HostBootScript");
-const ChannelsManager = require("../lib/ChannelsManager").getChannelsManager();
-const UtilFunctions = require("../utils/utilFunctions");
+const ChannelsManager = require("../../../utils/SWChannelsManager").getChannelsManager();
+const UtilFunctions = require("../../../utils/utilFunctions");
 let bootScript = null;
 
 function createChannelHandler (req, res) {
@@ -131,10 +131,10 @@ self.addEventListener('message', function(event) {
         if(event.data.seed){
             //TODO: check if this is not the same code with swHostScript
             bootScript = new HostBootScript(event.data.seed);
-            bootScript.boot((err, archive) => {
-                archive.listFiles("app", (err, files) => {
+            bootScript.boot((err, rawDossier) => {
+                rawDossier.listFiles("app", (err, files) => {
                     console.log(files);
-                    archive.readFile("app/index.html", (err, content) => {
+                    rawDossier.readFile("app/index.html", (err, content) => {
                         console.log(content.toString());
                     })
                 })

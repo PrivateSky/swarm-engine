@@ -71,7 +71,7 @@ function sendMessage(channelName, message, callback) {
 
     if(typeof plugs[header.swarmTarget] === "undefined"){
         //we need to do this in order to ensure that we have a handler for every fake/real channel that we create
-        let PC = require("../../../powerCords/browser/ServiceWorkerPC");
+        let PC = require("../powerCords/browser/ServiceWorkerPC");
         plugs[header.swarmTarget] =  new PC();
         $$.swarmEngine.plug(header.swarmTarget, plugs[header.swarmTarget]);
     }
@@ -113,7 +113,7 @@ function receiveMessage(channelName, callback) {
 
 }
 
-function ChannelsManager() {
+function SWChannelsManager() {
 
         this.createChannel = createChannel;
         this.sendMessage = sendMessage;
@@ -126,7 +126,7 @@ function ChannelsManager() {
         console.log("ChannelsManager initialised!");
 }
 
-let channelManagerInstance = new ChannelsManager();
+let channelManagerInstance = new SWChannelsManager();
 
 module.exports.getChannelsManager = function(){
     return channelManagerInstance;
