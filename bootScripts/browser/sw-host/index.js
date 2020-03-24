@@ -1,7 +1,7 @@
 const HostBootScript = require("./HostBootScript");
-const MimeType = require("../lib/MimeType");
+const MimeType = require("../util/MimeType");
 let bootScript = null;
-let csbArchive = null;
+let rawDossier = null;
 
 
 self.addEventListener('activate', function (event) {
@@ -23,10 +23,10 @@ self.addEventListener('message', function (event) {
         if (event.data.seed) {
             bootScript = new HostBootScript(event.data.seed);
             bootScript.boot((err, archive) => {
-                csbArchive = archive;
-                csbArchive.listFiles("app", (err, files) => {
+                rawDossier = archive;
+                rawDossier.listFiles("app", (err, files) => {
                     if (files.length > 0 && files.indexOf("app/index.html")!==1) {
-                        csbArchive.readFile("app/index.html", (err, content) => {
+                        rawDossier.readFile("app/index.html", (err, content) => {
 
                             let blob = new Blob([content.toString()], {type: "text/html;charset=utf-8"});
 
@@ -64,7 +64,7 @@ let getAppFile = function (request) {
         let url = new URL(request.url);
         let appFile = "app" + url.pathname;
         console.log(appFile);
-        csbArchive.readFile(appFile, (err, content) => {
+        rawDossier.readFile(appFile, (err, content) => {
             if (err) {
                 reject(err);
             } else {
@@ -91,7 +91,7 @@ self.addEventListener('fetch', (event) => {
         return response;
     };
 
-    if (csbArchive) {
+    if (rawDossier) {
         event.respondWith(
             caches.match(event.request).then((resp) => {
                 return resp || getAppFile(event.request).then(cacheAndRelayResponse);
