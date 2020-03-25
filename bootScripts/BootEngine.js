@@ -31,7 +31,7 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
 		const readFile = promisify(this.rawDossier.readFile);
 
 		let fileList = await listFiles("/" + EDFS.constants.CSB.CONSTITUTION_FOLDER);
-		fileList = bundles.filter(bundle => fileList.includes(`/${bundle}`))
+		fileList = bundles.filter(bundle => fileList.includes(`${bundle}`))
 			.map(bundle => `/${EDFS.constants.CSB.CONSTITUTION_FOLDER}/${bundle}`);
 
 		if (fileList.length !== bundles.length) {
