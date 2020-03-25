@@ -29,23 +29,11 @@ function HostBootScript(seed) {
         callback(undefined, seed);
     }
 
+
     function getEDFS(callback){
-        const FETCH_BRICK_STORAGE_STRATEGY_NAME = "sw-host-fetch";
-        let EDFS = require("edfs");
-        let SEED = require("bar").Seed;
-        const seed = new SEED(self.seed);
-
-        //self.edfs = EDFS.attachWithSeed(seed);
-
-        const hasHttpStrategyRegistered = $$.brickTransportStrategiesRegistry.has(FETCH_BRICK_STORAGE_STRATEGY_NAME);
-
-        if (!hasHttpStrategyRegistered) {
-            let FetchBrickTransportStrategy = require("edfs").FetchBrickTransportStrategy;
-            let fetchStrategy = new FetchBrickTransportStrategy(seed.getEndpoint());
-            $$.brickTransportStrategiesRegistry.add(FETCH_BRICK_STORAGE_STRATEGY_NAME, fetchStrategy);
-        }
-        self.edfs = EDFS.attach(FETCH_BRICK_STORAGE_STRATEGY_NAME);
-        callback(undefined, self.edfs);
+        const EDFS = require("edfs");
+        edfs = EDFS.attachWithSeed(seed);
+        callback(null, edfs);
     }
 
     function initializeSwarmEngine(callback){
