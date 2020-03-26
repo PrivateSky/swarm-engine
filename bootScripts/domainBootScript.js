@@ -6,9 +6,9 @@ const seed = process.env.PSK_DOMAIN_SEED;
 //preventing children to access the env parameter
 process.env.PSK_DOMAIN_SEED = undefined;
 
-if(process.argv.length > 3){
+if (process.argv.length > 3) {
     process.env.PRIVATESKY_DOMAIN_NAME = process.argv[2];
-}else{
+} else {
     process.env.PRIVATESKY_DOMAIN_NAME = "AnonymousDomain" + process.pid;
 }
 
@@ -25,39 +25,40 @@ if (typeof config.workspace !== "undefined" && config.workspace !== "undefined")
     process.env.DOMAIN_WORKSPACE = config.workspace;
 }
 
-function boot(){
+function boot() {
     const BootEngine = require("./BootEngine");
 
     const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "virtualMQ.js", "edfsBar.js"], ["blockchain.js"]);
-    bootter.boot(function(err, archive){
-        if(err){
+    bootter.boot(function (err, archive) {
+        if (err) {
             console.log(err);
             return;
         }
-        try{
+        try {
             plugPowerCords();
-        }catch(err){
+        } catch (err) {
             console.log("Caught an error will finishing booting process", err);
         }
     })
 }
 
-function getSeed(callback){
+function getSeed(callback) {
     callback(undefined, self.seed);
 }
 
 let self = {seed};
-function getEDFS(callback){
+
+function getEDFS(callback) {
     let EDFS = require("edfs");
     self.edfs = EDFS.attachWithSeed(seed);
     callback(undefined, self.edfs);
 }
 
-function initializeSwarmEngine(callback){
+function initializeSwarmEngine(callback) {
     const EDFS = require("edfs");
     const bar = self.edfs.loadBar(self.seed);
-    bar.readFile(EDFS.constants.CSB.DOMAIN_IDENTITY_FILE, (err, content)=>{
-        if(err){
+    bar.readFile(EDFS.constants.CSB.DOMAIN_IDENTITY_FILE, (err, content) => {
+        if (err) {
             return callback(err);
         }
         self.domainName = content.toString();
@@ -71,20 +72,20 @@ function initializeSwarmEngine(callback){
     });
 }
 
-function plugPowerCords(){
+function plugPowerCords() {
     const dossier = require("dossier");
-    dossier.load(self.seed, "DomainIdentity", function(err, dossierHandler){
-        if(err){
+    dossier.load(self.seed, "DomainIdentity", function (err, dossierHandler) {
+        if (err) {
             throw err;
         }
 
-        dossierHandler.startTransaction("DomainConfigTransaction", "getDomains").onReturn(function(err, domainConfigs){
-            if(err){
+        dossierHandler.startTransaction("DomainConfigTransaction", "getDomains").onReturn(function (err, domainConfigs) {
+            if (err) {
                 throw  err;
             }
 
             const se = require("swarm-engine");
-            if(domainConfigs.length === 0){
+            if (domainConfigs.length === 0) {
                 console.log("No domain configuration found in CSB. Boot process will stop here...");
                 return;
             }
@@ -98,8 +99,8 @@ function plugPowerCords(){
                 }
             }
 
-            dossierHandler.startTransaction("Agents", "getAgents").onReturn(function(err, agents){
-                if(err){
+            dossierHandler.startTransaction("Agents", "getAgents").onReturn(function (err, agents) {
+                if (err) {
                     throw err;
                 }
 
@@ -108,9 +109,9 @@ function plugPowerCords(){
                 }
 
                 const EDFS = require("edfs");
-                const bar = self.edfs.loadBar(self.seed);
-                bar.readFile(EDFS.constants.CSB.CONSTITUTION_FOLDER + '/threadBoot.js', (err, fileContents) => {
-                    if(err) {
+                const rawDossier = self.edfs.loadRawDossier(self.seed);
+                rawDossier.readFile("/" + EDFS.constants.CSB.CONSTITUTION_FOLDER + '/threadBoot.js', (err, fileContents) => {
+                    if (err) {
                         throw err;
                     }
 
