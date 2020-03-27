@@ -11,13 +11,13 @@ if (process.argv.length >= 3) {
 }
 console.log(`Launcher is using ${seed} as SEED`);
 
-function boot(){
+function boot() {
     const BootEngine = require("./BootEngine");
 
     const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "virtualMQ.js", "edfsBar.js"], ["blockchain.js"]);
     $$.log("Launcher booting process started");
-    bootter.boot(function(err, archive){
-        if(err){
+    bootter.boot(function (err, archive) {
+        if (err) {
             console.log(err);
             return;
         }
@@ -34,20 +34,26 @@ function boot(){
 
 let self = {seed};
 
-function getSeed(callback){
+function getSeed(callback) {
     setTimeout(() => {
         callback(undefined, self.seed);
     }, 0);
 }
 
 
-function getEDFS(callback){
+function getEDFS(callback) {
     let EDFS = require("edfs");
-    self.edfs = EDFS.attachWithSeed(self.seed);
-    callback(undefined, self.edfs);
+    EDFS.attachWithSeed(self.seed, (err, edfsInst) => {
+        if (err) {
+            return callback(err);
+        }
+
+        self.edfs = edfsInst;
+        callback(undefined, self.edfs);
+    });
 }
 
-function initializeSwarmEngine(callback){
+function initializeSwarmEngine(callback) {
     dossier = require("dossier");
     /*const se = require("swarm-engine");
     se.initialise();*/
@@ -65,12 +71,12 @@ function launch(csb) {
 
     const domains = {};
 
-    dossier.load(csb.getSeed(), "launcherIdentity", function(err, dossierHandler){
-        if(err){
+    dossier.load(csb.getSeed(), "launcherIdentity", function (err, dossierHandler) {
+        if (err) {
             throw err;
         }
-        dossierHandler.startTransaction("Domain", "getDomains").onReturn(function(err, domainsRefs){
-            if(err){
+        dossierHandler.startTransaction("Domain", "getDomains").onReturn(function (err, domainsRefs) {
+            if (err) {
                 throw err;
             }
 

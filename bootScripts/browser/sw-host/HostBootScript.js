@@ -32,8 +32,7 @@ function HostBootScript(seed) {
 
     function getEDFS(callback){
         const EDFS = require("edfs");
-        edfs = EDFS.attachWithSeed(seed);
-        callback(null, edfs);
+        EDFS.attachWithSeed(seed, callback);
     }
 
     function initializeSwarmEngine(callback){
