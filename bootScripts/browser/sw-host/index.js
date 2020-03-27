@@ -22,8 +22,7 @@ self.addEventListener('message', function (event) {
 
         if (event.data.seed) {
             bootScript = new HostBootScript(event.data.seed);
-            bootScript.boot((err, archive) => {
-                rawDossier = archive;
+            bootScript.boot((err, rawDossier) => {
                 rawDossier.listFiles("app", (err, files) => {
                     if (files.length > 0 && files.indexOf("app/index.html")!==1) {
                         rawDossier.readFile("app/index.html", (err, content) => {
