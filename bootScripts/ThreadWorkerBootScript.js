@@ -26,8 +26,14 @@ function boot() {
     let edfs;
     function getEDFS(callback){
         const EDFS = require("edfs");
-        edfs = EDFS.attachWithSeed(getSeed());
-        callback(null, edfs);
+        EDFS.attachWithSeed(getSeed(), (err, edfsInst) => {
+            if (err) {
+                return callback(err);
+            }
+
+            edfs = edfsInst;
+            callback(null, edfs);
+        });
     }
 
     function initializeSwarmEngine(callback){
