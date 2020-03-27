@@ -1,4 +1,4 @@
-function OuterThreadPowerCord(threadBootScript, eval= false, energySourceSeed, numberOfWires = 1) { // seed or array of constitution bundle paths
+function OuterThreadPowerCord(threadBootScript, evaluate= false, energySourceSeed, numberOfWires = 1) { // seed or array of constitution bundle paths
     const syndicate = require('syndicate');
     let pool = null;
     let self = this;
@@ -10,7 +10,7 @@ function OuterThreadPowerCord(threadBootScript, eval= false, energySourceSeed, n
             bootScript: threadBootScript,
             workerOptions: {
                 // cwd: process.env.DOMAIN_WORKSPACE,
-                eval: eval,
+                eval: evaluate,
                 env: {
                     IDENTITY: self.identity
                 },

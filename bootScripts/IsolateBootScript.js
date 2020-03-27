@@ -4,7 +4,8 @@ async function getIsolatesWorker({workerData: {constitutions}, externalApi}) {
     const beesHealer = swarmUtils.beesHealer;
     const OwM = swarmUtils.OwM;
     const SwarmPacker = swarmUtils.SwarmPacker;
-    const IsolatedVM = require('pskisolates');
+    const pskIsolatesModuleName = "pskisolates";
+    const IsolatedVM = require(pskIsolatesModuleName);
     const {EventEmitter} = require('events');
 
     const config = IsolatedVM.IsolateConfig.defaultConfig;

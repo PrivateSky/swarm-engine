@@ -1,7 +1,8 @@
 function OuterIsolatePowerCord(energySource, numberOfWires = 1, apis) { // seed or array of constitution bundle paths
     const syndicate = require('syndicate');
     const bootScripts = require('../bootScripts');
-    const pskisolates = require('pskisolates');
+    const pskIsolatesModuleName = "pskisolates";
+    const pskisolates = require(pskIsolatesModuleName);
     let pool = null;
 
 
