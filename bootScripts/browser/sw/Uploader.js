@@ -92,10 +92,10 @@ Uploader.prototype.uploadFile = function (file, callback) {
     const destFile = `${this.uploadPath}${file.name}`;
     file.arrayBuffer().then((buffer) => {
         const buf = new Buffer(buffer);
-        this.dossier.writeFile(destFile, buf, (err, data) => {
-            console.log(err);
-            console.log(data);
-            callback(null, data);
+        this.dossier.writeFile(destFile, buf, (err) => {
+            callback(null, {
+                path: destFile
+            });
         })
     })
 }
@@ -119,32 +119,53 @@ Uploader.prototype.upload = function (requestBody, callback) {
         files = requestBody[this.inputName];
     }
 
-    const errors = [];
     const filesUploaded = [];
-    let filesProcessedCounter = 0;
+
+    function uploadFileCallback(file, err) {
+
+        const _callback = function (err, result) {
+            const srcFile = {
+                name: file.name,
+                type: file.type
+            };
+
+            if (err) {
+                filesUploaded.push({
+                    file: srcFile,
+                    error: err
+                });
+            } else {
+                filesUploaded.push({
+                    file: srcFile,
+                    result,
+                });
+            }
+
+
+            if (filesUploaded.length === files.length) {
+                let errors = filesUploaded.filter(item => item.error !== undefined);
+                const uploadedFiles = filesUploaded.filter(item => item.result !== undefined);
+
+                errors = (errors.length) ? errors : null;
+                callback(errors, uploadedFiles);
+            }
+        };
+
+        if (err) {
+            return _callback(err);
+        }
+        return _callback;
+    }
 
     for (const file of files) {
         try {
             this.validateFile(file);
         } catch (e) {
-            errors.push(e);
-            filesProcessedCounter++;
+            uploadFileCallback(file, e);
             continue;
         }
 
-        this.uploadFile(file, (err, result) => {
-            filesProcessedCounter++;
-            if (err) {
-                errors.push(err);
-            } else {
-                filesUploaded.push(result);
-            }
-
-            // Send the results
-            if (filesProcessedCounter === files.length) {
-                return callback(errors, filesUploaded);
-            }
-        });
+        this.uploadFile(file, uploadFileCallback(file));
     }
 }
 

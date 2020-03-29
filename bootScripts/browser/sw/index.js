@@ -77,11 +77,14 @@ function uploadHandler (req, res) {
     });
 
     uploader.upload(req.body, function (err, uploadedFiles) {
-        console.log('=============================');
-        console.log(err, uploadedFiles);
-        res.status(200);
-        res.set("Content-Type", "text/plain");
-        res.send("OK!");
+        if (err && !uploadedFiles.length) {
+            res.sendError(500, err, 'application/json');
+            return;
+        }
+
+        res.status(201);
+        res.set("Content-Type", "application/json");
+        res.send(JSON.stringify(uploadedFiles));
     });
 }
 
@@ -93,10 +96,12 @@ server.put("/create-channel/:channelName", createChannelHandler);
 server.post("/forward-zeromq/:channelName", forwardMessageHandler);
 server.post("/send-message/:channelName", sendMessageHandler);
 server.get("/receive-message/:channelName", receiveMessageHandler);
+
+
 server.post('/upload', uploadHandler);
 
 server.get('/upload', function (req, res) {
-  rawDossier.listFiles('/', (err, files) => {
+    rawDossier.listFiles('/data/uploads', (err, files) => {
     res.status(200);
     res.set("Content-Type", "text/plain");
     res.send(files.join('\n'));
@@ -179,6 +184,7 @@ self.addEventListener('message', function(event) {
 });
 
 
+// TODO: What's this?
 //const ServiceWorkerPC = require("../../../powerCords/browser/ServiceWorkerPC");
 //const se = require("swarm-engine");
 //se.initialise("*");
