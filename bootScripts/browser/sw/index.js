@@ -179,16 +179,16 @@ self.addEventListener('message', function(event) {
 });
 
 
-const ServiceWorkerPC = require("../../../powerCords/browser/ServiceWorkerPC");
-const se = require("swarm-engine");
-se.initialise("*");
-let pc = new ServiceWorkerPC();
-$$.swarmEngine.plug("*", pc);
+//const ServiceWorkerPC = require("../../../powerCords/browser/ServiceWorkerPC");
+//const se = require("swarm-engine");
+//se.initialise("*");
+//let pc = new ServiceWorkerPC();
+//$$.swarmEngine.plug("*", pc);
 
 
-$$.swarms.describe("listDossierFiles", {
-    start: function(path){
-        console.log("i'm here",path);
-        this.return(null, [1,2,3]);
-    }
-});
+//$$.swarms.describe("listDossierFiles", {
+    //start: function(path){
+        //console.log("i'm here",path);
+        //this.return(null, [1,2,3]);
+    //}
+//});
