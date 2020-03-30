@@ -131,7 +131,7 @@ server.use(function(req,res, next){
 // Uncomment this during development to forward requests
 // to host network if you're planning to load the application
 // from localhost
-server.useDefault();
+//server.useDefault();
 
 /*
 * if no previous handler response to the event it means that the url doesn't exit
