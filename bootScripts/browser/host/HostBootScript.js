@@ -1,4 +1,5 @@
 function HostBootScript(identity){
+    require('callflow').initialise();
     const se = require("swarm-engine");
     se.initialise(identity);
     const SRPC = se.SmartRemoteChannelPowerCord;

@@ -36,6 +36,7 @@ function HostSWBootScript(seed) {
     }
 
     function initializeSwarmEngine(callback){
+            require('callflow').initialise();
             console.log("Initializing swarm engine");
             $$.PSK_PubSub = require("soundpubsub").soundPubSub;
             const se = pskruntimeRequire("swarm-engine");
