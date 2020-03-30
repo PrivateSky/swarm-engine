@@ -175,6 +175,7 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
             if (p === 'identity') {
                 setup();
             }
+            return true;
         }
     });
 }
