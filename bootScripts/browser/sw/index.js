@@ -4,6 +4,7 @@ const ChannelsManager = require("../../../utils/SWChannelsManager").getChannelsM
 const UtilFunctions = require("../../../utils/utilFunctions");
 const Uploader = require("./Uploader");
 const EDFS_CONSTANTS = require('edfs').constants;
+
 let bootScript = null;
 let rawDossier;
 
@@ -130,7 +131,10 @@ server.use(function(req,res, next){
     }
 })
 
-server.useDefault();
+// Uncomment this during development to forward requests
+// to host network if you're planning to load the application
+// from localhost
+//server.useDefault();
 
 /*
 * if no previous handler response to the event it means that the url doesn't exit
@@ -170,7 +174,7 @@ self.addEventListener('message', function(event) {
             }
 
             //TODO: check if this is not the same code with swHostScript
-            bootScript = new HostBootScript(event.data.seed);
+            bootScript = new SSappSWBootScript(event.data.seed);
             bootScript.boot((err, _rawDossier) => {
                 rawDossier = _rawDossier
                 rawDossier.listFiles("app", (err, files) => {
@@ -182,20 +186,5 @@ self.addEventListener('message', function(event) {
             });
 
         }
-    }
-});
-
-
-const ServiceWorkerPC = require("../../../powerCords/browser/ServiceWorkerPC");
-const se = require("swarm-engine");
-se.initialise("*");
-let pc = new ServiceWorkerPC();
-$$.swarmEngine.plug("*", pc);
-
-
-$$.swarms.describe("listDossierFiles", {
-    start: function(path){
-        console.log("i'm here",path);
-        this.return(null, [1,2,3]);
     }
 });
