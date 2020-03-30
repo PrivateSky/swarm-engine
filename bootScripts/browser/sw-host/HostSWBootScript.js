@@ -36,11 +36,13 @@ function HostSWBootScript(seed) {
     }
 
     function initializeSwarmEngine(callback){
-
+            console.log("Initializing swarm engine");
             $$.PSK_PubSub = require("soundpubsub").soundPubSub;
             const se = pskruntimeRequire("swarm-engine");
-            se.initialise("parent");
+            se.initialise("*");
             self.IframePC = se.IframePowerCord;
+            let ServiceWorkerPC = require("../../../powerCords/browser/ServiceWorkerPC");
+            $$.swarmEngine.plug("*", new ServiceWorkerPC());
             callback();
     }
 

@@ -22,4 +22,5 @@ const browserContexts = [or.constants.BROWSER_ENVIRONMENT_TYPE, or.constants.SER
 if (browserContexts.indexOf($$.environmentType) !== -1) {
     module.exports.IframePowerCord = require("./powerCords/browser/IframePowerCord");
     module.exports.HostPowerCord = require("./powerCords/browser/HostPowerCord");
+    module.exports.ServiceWorkerPC = require("./powerCords/browser/ServiceWorkerPC");
 }

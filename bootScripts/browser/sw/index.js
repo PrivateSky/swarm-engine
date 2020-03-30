@@ -2,7 +2,12 @@ const server = require("ssapp-middleware").getMiddleware();
 const SSappSWBootScript = require("./SSappSWBootScript");
 const ChannelsManager = require("../../../utils/SWChannelsManager").getChannelsManager();
 const UtilFunctions = require("../../../utils/utilFunctions");
+const Uploader = require("./Uploader");
+const EDFS_CONSTANTS = require('edfs').constants;
+
 let bootScript = null;
+let rawDossier = null;
+let uploader = null;
 
 function createChannelHandler (req, res) {
     ChannelsManager.createChannel(req.params.channelName, function (err) {
@@ -66,6 +71,25 @@ function receiveMessageHandler (req, res) {
     });
 }
 
+function uploadHandler (req, res) {
+    if (!uploader) {
+        setupUploader({
+            inputName: 'files[]',
+            uploadPath: `${EDFS_CONSTANTS.CSB.DATA_FOLDER}/uploads/`
+        });
+    }
+    uploader.upload(req.body, function (err, uploadedFiles) {
+        if (err && (!Array.isArray(uploadedFiles) || !uploadedFiles.length))  {
+            res.sendError(400, err, 'application/json');
+            return;
+        }
+
+        res.status(201);
+        res.set("Content-Type", "application/json");
+        res.send(JSON.stringify(uploadedFiles));
+    });
+}
+
 /*
 * just adding the event listener to catch all the requests
 */
@@ -74,6 +98,14 @@ server.put("/create-channel/:channelName", createChannelHandler);
 server.post("/forward-zeromq/:channelName", forwardMessageHandler);
 server.post("/send-message/:channelName", sendMessageHandler);
 server.get("/receive-message/:channelName", receiveMessageHandler);
+server.post('/upload', uploadHandler);
+server.get('/upload', function (req, res) {
+    rawDossier.listFiles('/data/uploads', (err, files) => {
+        res.status(200);
+        res.set("Content-Type", "text/plain");
+        res.send(files.join('\n'));
+    })
+});
 
 
 server.use(function(req,res, next){
@@ -96,6 +128,11 @@ server.use(function(req,res, next){
     }
 })
 
+// Uncomment this during development to forward requests
+// to host network if you're planning to load the application
+// from localhost
+//server.useDefault();
+
 /*
 * if no previous handler response to the event it means that the url doesn't exit
 *
@@ -110,6 +147,30 @@ server.use(function (req, res, next) {
 server.init(self);
 
 
+/**
+ * Configure uploader
+ *
+ * @param {object} config
+ */
+function setupUploader(config) {
+    config = config || {};
+    config.inputName = config.inputName || 'files[]';
+
+    if (typeof config.uploadPath !== 'string' || !config.uploadPath.length) {
+        throw new Error('Upload path is required');
+    }
+
+    let uploadPath = config.uploadPath;
+    if (uploadPath.substr(-1) !== '/') {
+        uploadPath += '/';
+    }
+
+    uploader = new Uploader({
+        inputName: config.inputName,
+        dossier: rawDossier,
+        uploadPath: uploadPath
+    });
+}
 
 
 self.addEventListener('activate', function (event) {
@@ -124,18 +185,45 @@ self.addEventListener('activate', function (event) {
 
 self.addEventListener('message', function(event) {
     if(event.target instanceof ServiceWorkerGlobalScope){
-        if(event.data.action ==="activate"){
+        if(event.data.action === "activate"){
             event.ports[0].postMessage({status: 'empty'});
         }
 
+        // Configure uploader
+        if (event.data.action === "uploader:configure") {
+            try {
+                setupUploader(event.data.config);
+                event.ports[0].postMessage({status: 'empty'});
+            } catch(e) {
+                console.error(e);
+                event.ports[0].postMessage({error: e});
+            }
+        }
+
         if(event.data.seed){
+            if (rawDossier) {
+                return;
+            }
+
             //TODO: check if this is not the same code with swHostScript
             bootScript = new SSappSWBootScript(event.data.seed);
-            bootScript.boot((err, rawDossier) => {
+            bootScript.boot((err, _rawDossier) => {
+                if (err) {
+                    console.error(err);
+                    event.ports[0].postMessage({error: err});
+                    return;
+                }
+
+                rawDossier = _rawDossier
                 rawDossier.listFiles("app", (err, files) => {
+                    if (err) {
+                        console.error(err);
+                    }
+
                     console.log(files);
                     rawDossier.readFile("app/index.html", (err, content) => {
                         console.log(content.toString());
+                        event.ports[0].postMessage({status: 'initialized'});
                     })
                 })
             });
