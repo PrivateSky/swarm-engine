@@ -1,5 +1,5 @@
 const server = require("ssapp-middleware").getMiddleware();
-HostBootScript = require("../sw-host/HostBootScript");
+const SSappSWBootScript = require("./SSappSWBootScript");
 const ChannelsManager = require("../../../utils/SWChannelsManager").getChannelsManager();
 const UtilFunctions = require("../../../utils/utilFunctions");
 const Uploader = require("./Uploader");
@@ -136,14 +136,16 @@ server.useDefault();
 * if no previous handler response to the event it means that the url doesn't exit
 *
 **/
-//server.use(function (req, res, next) {
-    //let requestedDomain = new URL(req.originalUrl).host;
-    //server.requestedHosts.delete(requestedDomain);
-    //res.status(404);
-    //res.end();
-//});
+server.use(function (req, res, next) {
+    let requestedDomain = new URL(req.originalUrl).host;
+    server.requestedHosts.delete(requestedDomain);
+    res.status(404);
+    res.end();
+});
 
 server.init(self);
+
+
 
 
 self.addEventListener('activate', function (event) {
@@ -170,11 +172,11 @@ self.addEventListener('message', function(event) {
             //TODO: check if this is not the same code with swHostScript
             bootScript = new HostBootScript(event.data.seed);
             bootScript.boot((err, _rawDossier) => {
-                rawDossier = _rawDossier;
+                rawDossier = _rawDossier
                 rawDossier.listFiles("app", (err, files) => {
                     console.log(files);
                     rawDossier.readFile("app/index.html", (err, content) => {
-                        event.ports[0].postMessage({status: 'finished', content: content.toString()});
+                        console.log(content.toString());
                     })
                 })
             });
@@ -184,17 +186,16 @@ self.addEventListener('message', function(event) {
 });
 
 
-// TODO: What's this?
-//const ServiceWorkerPC = require("../../../powerCords/browser/ServiceWorkerPC");
-//const se = require("swarm-engine");
-//se.initialise("*");
-//let pc = new ServiceWorkerPC();
-//$$.swarmEngine.plug("*", pc);
+const ServiceWorkerPC = require("../../../powerCords/browser/ServiceWorkerPC");
+const se = require("swarm-engine");
+se.initialise("*");
+let pc = new ServiceWorkerPC();
+$$.swarmEngine.plug("*", pc);
 
 
-//$$.swarms.describe("listDossierFiles", {
-    //start: function(path){
-        //console.log("i'm here",path);
-        //this.return(null, [1,2,3]);
-    //}
-//});
+$$.swarms.describe("listDossierFiles", {
+    start: function(path){
+        console.log("i'm here",path);
+        this.return(null, [1,2,3]);
+    }
+});

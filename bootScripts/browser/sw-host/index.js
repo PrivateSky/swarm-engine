@@ -1,4 +1,4 @@
-const HostBootScript = require("./HostBootScript");
+const HostSWBootScript = require("./HostSWBootScript");
 const MimeType = require("../util/MimeType");
 let bootScript = null;
 let rawDossier = null;
@@ -21,7 +21,7 @@ self.addEventListener('message', function (event) {
         }
 
         if (event.data.seed) {
-            bootScript = new HostBootScript(event.data.seed);
+            bootScript = new HostSWBootScript(event.data.seed);
             bootScript.boot((err, rawDossier) => {
                 rawDossier.listFiles("app", (err, files) => {
                     if (files.length > 0 && files.indexOf("app/index.html")!==1) {
@@ -104,5 +104,19 @@ self.addEventListener('fetch', (event) => {
         );
     }
 
-
 });
+
+const ServiceWorkerPC = require("../../../powerCords/browser/ServiceWorkerPC");
+const se = require("swarm-engine");
+se.initialise("*");
+let pc = new ServiceWorkerPC();
+$$.swarmEngine.plug("*", pc);
+
+
+$$.swarms.describe("listDossierFiles", {
+    start: function(path){
+        console.log("i'm here",path);
+        this.return(null, [1,2,3]);
+    }
+});
+
