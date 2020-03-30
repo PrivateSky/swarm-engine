@@ -1,10 +1,10 @@
-function HostBootScript(seed) {
+function SSappSWBootScript(seed) {
 
-    console.log("Booting host...");
+    console.log("Booting ssapp sw...");
     const seeds = {};
     let self = {seed};
 
-     this.boot = function(callback){
+    this.boot = function(callback){
         const BootEngine = require("../../BootEngine");
 
         const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["webshims.js","pskruntime.js"],["bindableModel.js"]);
@@ -37,11 +37,11 @@ function HostBootScript(seed) {
 
     function initializeSwarmEngine(callback){
 
-            $$.PSK_PubSub = require("soundpubsub").soundPubSub;
-            const se = pskruntimeRequire("swarm-engine");
-            se.initialise("parent");
-            self.IframePC = se.IframePowerCord;
-            callback();
+        $$.PSK_PubSub = require("soundpubsub").soundPubSub;
+        const se = pskruntimeRequire("swarm-engine");
+        se.initialise("parent");
+        self.IframePC = se.IframePowerCord;
+        callback();
     }
 
 
@@ -53,7 +53,7 @@ function HostBootScript(seed) {
 
 }
 
-module.exports = HostBootScript;
+module.exports = SSappSWBootScript;
 
 
 

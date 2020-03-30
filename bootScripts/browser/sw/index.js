@@ -1,5 +1,5 @@
 const server = require("ssapp-middleware").getMiddleware();
-HostBootScript = require("../sw-host/HostBootScript");
+const SSappSWBootScript = require("./SSappSWBootScript");
 const ChannelsManager = require("../../../utils/SWChannelsManager").getChannelsManager();
 const UtilFunctions = require("../../../utils/utilFunctions");
 let bootScript = null;
@@ -130,7 +130,7 @@ self.addEventListener('message', function(event) {
 
         if(event.data.seed){
             //TODO: check if this is not the same code with swHostScript
-            bootScript = new HostBootScript(event.data.seed);
+            bootScript = new SSappSWBootScript(event.data.seed);
             bootScript.boot((err, rawDossier) => {
                 rawDossier.listFiles("app", (err, files) => {
                     console.log(files);
@@ -141,20 +141,5 @@ self.addEventListener('message', function(event) {
             });
 
         }
-    }
-});
-
-
-const ServiceWorkerPC = require("../../../powerCords/browser/ServiceWorkerPC");
-const se = require("swarm-engine");
-se.initialise("*");
-let pc = new ServiceWorkerPC();
-$$.swarmEngine.plug("*", pc);
-
-
-$$.swarms.describe("listDossierFiles", {
-    start: function(path){
-        console.log("i'm here",path);
-        this.return(null, [1,2,3]);
     }
 });

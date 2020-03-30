@@ -1,4 +1,4 @@
-function SSAppBootScript(identity){
+function HostBootScript(identity){
     const se = require("swarm-engine");
     se.initialise(identity);
     const SRPC = se.SmartRemoteChannelPowerCord;
@@ -7,6 +7,6 @@ function SSAppBootScript(identity){
     $$.swarmEngine.plug("test/agent/007", powerCord);
 }
 
-module.exports = SSAppBootScript;
+module.exports = HostBootScript;
 
 
