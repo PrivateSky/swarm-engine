@@ -93,7 +93,7 @@ Uploader.prototype.uploadFile = function (file, callback) {
     file.arrayBuffer().then((buffer) => {
         const buf = new Buffer(buffer);
         this.dossier.writeFile(destFile, buf, (err) => {
-            callback(null, {
+            callback(err, {
                 path: destFile
             });
         })
