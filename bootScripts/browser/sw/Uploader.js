@@ -9,11 +9,26 @@ const Buffer = require('buffer').Buffer;
  * @param {string} options.uploadPath
  */
 function Uploader(options) {
-    options = options || {};
     this.inputName = null;
     this.dossier = null;
+    this.filename = null; // Must be configured when doing a request body upload
+    this.maxSize = null; // When not null file size validation is done
+    this.allowedMimeTypes = null; // When not null, mime type validation is done
     this.uploadPath = null;
     this.uploadMultipleFiles = false;
+
+    this.configure(options);
+
+}
+
+Uploader.prototype.Error = {
+    NO_FILES: 10,
+    INVALID_FILE: 20,
+    FILE_EXISTS: 30
+};
+
+Uploader.prototype.configure = function (options) {
+    options = options || {};
 
     if (typeof options.inputName !== 'string' || !options.inputName.length) {
         throw new Error("The input name is required!");
@@ -31,24 +46,24 @@ function Uploader(options) {
     this.dossier = options.dossier;
     this.uploadPath = options.uploadPath;
     this.uploadMultipleFiles = this.inputName.substr(-2) === '[]';
+    this.filename = options.filename || null;
+    this.maxSize = options.maxSize || null;
+    this.allowedMimeTypes = options.allowedMimeTypes || null;
 }
-
-Uploader.prototype.Error = {
-    NO_FILES: 10,
-    INVALID_FILE: 20
-};
 
 
 /**
  * @param {object|any} body
- * @throws {Error}
+ * @throws {object}
  */
 Uploader.prototype.validateRequestBody = function (body) {
     const inputName = this.inputName;
 
     if (typeof body !== 'object') {
-        const error = new Error(`No files have been uploaded. "${inputName}" input is empty!"`);
-        error.code = this.Error.NO_FILES;
+        const error = {
+            message: `No files have been uploaded. "${inputName}" input is empty!"`,
+            code: this.Error.NO_FILES
+        }
         throw error;
     }
 
@@ -61,8 +76,10 @@ Uploader.prototype.validateRequestBody = function (body) {
     }
 
     if (!__uploadExists()) {
-        const error = new Error(`No files have been uploaded. "${inputName}" input is empty!"`);
-        error.code = this.Error.NO_FILES;
+        const error = {
+            message: `No files have been uploaded. "${inputName}" input is empty!"`,
+            code: this.Error.NO_FILES
+        }
         throw error;
     }
 }
@@ -71,12 +88,14 @@ Uploader.prototype.validateRequestBody = function (body) {
  * Validate a single file
  *
  * @param {File} file
- * @throws {Error}
+ * @throws {object}
  */
 Uploader.prototype.validateFile = function (file) {
     if (!file instanceof File) {
-        const error = new Error('File must be an instance of File!');
-        error.code = this.Error.INVALID_FILE;
+        const error = {
+            message:'File must be an instance of File!',
+            code: this.Error.INVALID_FILE
+        }
         throw error;
     }
 
@@ -90,14 +109,50 @@ Uploader.prototype.validateFile = function (file) {
  */
 Uploader.prototype.uploadFile = function (file, callback) {
     const destFile = `${this.uploadPath}${file.name}`;
-    file.arrayBuffer().then((buffer) => {
-        const buf = new Buffer(buffer);
-        this.dossier.writeFile(destFile, buf, (err) => {
-            callback(err, {
-                path: destFile
-            });
+
+    let uploadPath = this.uploadPath;
+    if (uploadPath.substr(-1) === '/') {
+        uploadPath = uploadPath.substr(0, uploadPath.length - 1);
+    }
+
+    const writeFile = () => {
+        file.arrayBuffer().then((buffer) => {
+            const buf = new Buffer(buffer);
+            this.dossier.writeFile(destFile, buf, (err) => {
+                callback(err, {
+                    path: destFile
+                });
+            })
         })
-    })
+    }
+
+    // Check that file doesn't exist
+    this.dossier.listFiles(uploadPath, (err, files) => {
+        // An "invalid path" error is permitted since it means
+        // that the destination file path hasn't been created yet
+        if (err && err.message.indexOf('Invalid path') === -1) {
+            return callback(err, {
+                path: destFile
+            })
+        }
+
+        // If the upload directory exists, check that
+        // the file doesn't exist
+        if (!err && files) {
+            if (files.indexOf(file.name) !== -1) {
+                const err = {
+                    message: 'File exists',
+                    code: this.Error.FILE_EXISTS
+                }
+                return callback(err, {
+                    path: destFile
+                });
+            }
+        }
+
+        writeFile();
+    });
+
 }
 
 /**

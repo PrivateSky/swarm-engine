@@ -72,11 +72,11 @@ function receiveMessageHandler (req, res) {
 }
 
 function uploadHandler (req, res) {
-    if (!uploader) {
-        setupUploader({
-            inputName: 'files[]',
-            uploadPath: `${EDFS_CONSTANTS.CSB.DATA_FOLDER}/uploads/`
-        });
+    try {
+        configureUploader(req.query);
+    } catch (e) {
+        res.sendError(400, JSON.stringify(e.message), 'application/json');
+        return;
     }
     uploader.upload(req.body, function (err, uploadedFiles) {
         if (err && (!Array.isArray(uploadedFiles) || !uploadedFiles.length))  {
@@ -131,7 +131,7 @@ server.use(function(req,res, next){
 // Uncomment this during development to forward requests
 // to host network if you're planning to load the application
 // from localhost
-//server.useDefault();
+server.useDefault();
 
 /*
 * if no previous handler response to the event it means that the url doesn't exit
@@ -152,24 +152,36 @@ server.init(self);
  *
  * @param {object} config
  */
-function setupUploader(config) {
+function configureUploader(config) {
     config = config || {};
-    config.inputName = config.inputName || 'files[]';
 
-    if (typeof config.uploadPath !== 'string' || !config.uploadPath.length) {
-        throw new Error('Upload path is required');
+    if (!config.path) {
+        throw new Error('Upload path is required. Ex: "POST /upload?path=/path/to/upload/folder"');
     }
 
-    let uploadPath = config.uploadPath;
+    if (!config.input && !config.filename) {
+        throw new Error('"input" query parameter is required when doing multipart/form-data uploads or "filename" query parameter for request body uploads. Ex: POST /upload?input=files[] or POST /upload?filename=my-file.big');
+    }
+
+    let uploadPath = config.path;
     if (uploadPath.substr(-1) !== '/') {
         uploadPath += '/';
     }
 
-    uploader = new Uploader({
-        inputName: config.inputName,
+    const options = {
+        inputName: config.input,
+        filename: config.filename,
+        maxSize: config.maxSize,
+        allowedMimeTypes: config.allowedTypes.split(','),
         dossier: rawDossier,
         uploadPath: uploadPath
-    });
+    };
+
+    if (!uploader) {
+        uploader = new Uploader(options);
+    } else {
+        uploader.configure(options);
+    }
 }
 
 
@@ -187,17 +199,6 @@ self.addEventListener('message', function(event) {
     if(event.target instanceof ServiceWorkerGlobalScope){
         if(event.data.action === "activate"){
             event.ports[0].postMessage({status: 'empty'});
-        }
-
-        // Configure uploader
-        if (event.data.action === "uploader:configure") {
-            try {
-                setupUploader(event.data.config);
-                event.ports[0].postMessage({status: 'empty'});
-            } catch(e) {
-                console.error(e);
-                event.ports[0].postMessage({error: e});
-            }
         }
 
         if(event.data.seed){
