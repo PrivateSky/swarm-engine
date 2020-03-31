@@ -78,9 +78,15 @@ function uploadHandler (req, res) {
         res.sendError(400, JSON.stringify(e.message), 'application/json');
         return;
     }
-    uploader.upload(req.body, function (err, uploadedFiles) {
+    uploader.upload(req, function (err, uploadedFiles) {
         if (err && (!Array.isArray(uploadedFiles) || !uploadedFiles.length))  {
-            res.sendError(400, err, 'application/json');
+            let error;
+            if (err instanceof Error) {
+                error = err.message;
+            } else {
+                error = err;
+            }
+            res.sendError(400, JSON.stringify(error), 'application/json');
             return;
         }
 

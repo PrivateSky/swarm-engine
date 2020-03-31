@@ -30,8 +30,9 @@ Uploader.prototype.Error = {
 Uploader.prototype.configure = function (options) {
     options = options || {};
 
-    if (typeof options.inputName !== 'string' || !options.inputName.length) {
-        throw new Error("The input name is required!");
+    if ((typeof options.inputName !== 'string' || !options.inputName) &&
+        (typeof options.filename !== 'string' || !options.filename)) {
+        throw new Error("The input name or filename is required");
     }
 
     if (typeof options.dossier !== 'object') {
@@ -45,7 +46,9 @@ Uploader.prototype.configure = function (options) {
     this.inputName = options.inputName;
     this.dossier = options.dossier;
     this.uploadPath = options.uploadPath;
-    this.uploadMultipleFiles = this.inputName.substr(-2) === '[]';
+    if (this.inputName) {
+        this.uploadMultipleFiles = this.inputName.substr(-2) === '[]';
+    }
     this.filename = options.filename || null;
     this.maxSize = options.maxSize || null;
     this.allowedMimeTypes = options.allowedMimeTypes || null;
@@ -58,26 +61,39 @@ Uploader.prototype.configure = function (options) {
  */
 Uploader.prototype.validateRequestBody = function (body) {
     const inputName = this.inputName;
+    const filename = this.filename;
 
-    if (typeof body !== 'object') {
+    if (typeof body === 'object' && !inputName) {
         const error = {
-            message: `No files have been uploaded. "${inputName}" input is empty!"`,
+            message: `No files have been uploaded or the "input" parameter hasn't been set.`,
+            code: this.Error.NO_FILES
+        }
+        throw error;
+    }
+
+    if (typeof body === 'string' && !filename) {
+        const error = {
+            message: `No files have been uploaded or the "filename" parameter hasn't been set.`,
             code: this.Error.NO_FILES
         }
         throw error;
     }
 
     const __uploadExists = () => {
-        if (this.uploadMultipleFiles) {
-            return Array.isArray(body[inputName]);
+        if (typeof body === 'object') {
+            if (this.uploadMultipleFiles) {
+                return Array.isArray(body[inputName]);
+            }
+
+            return body[inputName] instanceof File;
         }
 
-        return body[inputName] instanceof File;
+        return body.length > 0;
     }
 
     if (!__uploadExists()) {
         const error = {
-            message: `No files have been uploaded. "${inputName}" input is empty!"`,
+            message: `No files have been uploaded or the "input"/"filename" parameters are missing.`,
             code: this.Error.NO_FILES
         }
         throw error;
@@ -101,6 +117,19 @@ Uploader.prototype.validateFile = function (file) {
 
     // TODO: validate file size?
     // TODO: validate allowed type?
+}
+
+/**
+ * Create a File object from the request body
+ * @param {EventRequest} request
+ * @return {File}
+ */
+Uploader.prototype.createFileFromRequest = function (request) {
+    const requestBody = request.body;
+    const file = new File([requestBody], this.filename, {
+        type: 'application/octet-stream'
+    });
+    return file;
 }
 
 /**
@@ -157,21 +186,28 @@ Uploader.prototype.uploadFile = function (file, callback) {
 
 /**
  * TODO: Support for uploading the request body payload
- * @param {object|any} requestBody
+ * @param {EventRequest} request
  * @param {callback} callback
  */
-Uploader.prototype.upload = function (requestBody, callback) {
+Uploader.prototype.upload = function (request, callback) {
     try {
-        this.validateRequestBody(requestBody);
+        this.validateRequestBody(request.body);
     } catch (e) {
         return callback(e);
     }
 
+    const isMultipartUpload = typeof request.body === 'object';
     let files = [];
-    if (!this.uploadMultipleFiles) {
-        files.push(requestBody[this.inputName]);
+
+    if (isMultipartUpload) {
+        if (!this.uploadMultipleFiles) {
+            files.push(request.body[this.inputName]);
+        } else {
+            files = request.body[this.inputName];
+        }
     } else {
-        files = requestBody[this.inputName];
+        const file = this.createFileFromRequest(request);
+        files.push(file);
     }
 
     const filesUploaded = [];
