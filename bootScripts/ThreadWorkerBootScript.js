@@ -49,7 +49,7 @@ function boot() {
             powerCord.transfer(packedSwarm);
         });
 
-        edfs.bootCSB(workerData.constitutionSeed, (err, csbhandler) =>{
+        edfs.bootRawDossier(workerData.constitutionSeed, (err, csbhandler) =>{
             if(err){
                 $$.throwError(err);
             }

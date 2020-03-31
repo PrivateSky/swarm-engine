@@ -22,7 +22,7 @@ function boot() {
             return;
         }
 
-        self.edfs.bootCSB(self.seed, (err, csb) => {
+        self.edfs.bootRawDossier(self.seed, (err, csb) => {
             if (err) {
                 throw err;
             }
