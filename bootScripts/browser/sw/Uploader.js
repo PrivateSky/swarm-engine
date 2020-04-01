@@ -16,6 +16,11 @@ function Uploader(options) {
     this.allowedMimeTypes = null; // When not null, mime type validation is done
     this.uploadPath = null;
     this.uploadMultipleFiles = false;
+    this.sizeMultiplier = {
+        'b': 1,
+        'k': 1000,
+        'm': 1000000
+    };
 
     this.configure(options);
 
@@ -24,6 +29,8 @@ function Uploader(options) {
 Uploader.prototype.Error = {
     NO_FILES: 10,
     INVALID_FILE: 20,
+    INVALID_TYPE: 21,
+    MAX_SIZE_EXCEEDED: 22,
     FILE_EXISTS: 30
 };
 
@@ -36,11 +43,11 @@ Uploader.prototype.configure = function (options) {
     }
 
     if (typeof options.dossier !== 'object') {
-        throw new Error("The dossier is required and must be an instance of RawDossier!");
+        throw new Error("The dossier is required and must be an instance of RawDossier");
     }
 
     if (typeof options.uploadPath !== 'string' || !options.uploadPath.length) {
-        throw new Error("The upload path is missing!");
+        throw new Error("The upload path is missing");
     }
 
     this.inputName = options.inputName;
@@ -50,8 +57,13 @@ Uploader.prototype.configure = function (options) {
         this.uploadMultipleFiles = this.inputName.substr(-2) === '[]';
     }
     this.filename = options.filename || null;
-    this.maxSize = options.maxSize || null;
-    this.allowedMimeTypes = options.allowedMimeTypes || null;
+    if (typeof options.maxSize === 'number' || typeof options.maxSize === 'string') {
+        this.maxSize = options.maxSize;
+    }
+
+    if (Array.isArray(options.allowedMimeTypes) && options.allowedMimeTypes.length) {
+        this.allowedMimeTypes = options.allowedMimeTypes;
+    }
 }
 
 
@@ -65,7 +77,7 @@ Uploader.prototype.validateRequestBody = function (body) {
 
     if (typeof body === 'object' && !inputName) {
         const error = {
-            message: `No files have been uploaded or the "input" parameter hasn't been set.`,
+            message: `No files have been uploaded or the "input" parameter hasn't been set`,
             code: this.Error.NO_FILES
         }
         throw error;
@@ -73,7 +85,7 @@ Uploader.prototype.validateRequestBody = function (body) {
 
     if (typeof body === 'string' && !filename) {
         const error = {
-            message: `No files have been uploaded or the "filename" parameter hasn't been set.`,
+            message: `No files have been uploaded or the "filename" parameter hasn't been set`,
             code: this.Error.NO_FILES
         }
         throw error;
@@ -93,7 +105,7 @@ Uploader.prototype.validateRequestBody = function (body) {
 
     if (!__uploadExists()) {
         const error = {
-            message: `No files have been uploaded or the "input"/"filename" parameters are missing.`,
+            message: `No files have been uploaded or the "input"/"filename" parameters are missing`,
             code: this.Error.NO_FILES
         }
         throw error;
@@ -109,14 +121,48 @@ Uploader.prototype.validateRequestBody = function (body) {
 Uploader.prototype.validateFile = function (file) {
     if (!file instanceof File) {
         const error = {
-            message:'File must be an instance of File!',
+            message:'File must be an instance of File',
             code: this.Error.INVALID_FILE
         }
         throw error;
     }
 
-    // TODO: validate file size?
-    // TODO: validate allowed type?
+    if (Array.isArray(this.allowedMimeTypes) && this.allowedMimeTypes.length) {
+        const fileType = file.type;
+        if (this.allowedMimeTypes.indexOf(fileType) === -1) {
+            const error = {
+                message:'File type is not allowed',
+                code: this.Error.INVALID_TYPE
+            }
+            throw error;
+        }
+    }
+
+    if (this.maxSize !== null) {
+        let unit = 'b';
+        if (typeof this.maxSize === 'string') {
+            unit = this.maxSize.substr('-1').toLowerCase();
+        }
+
+        const sizeMultiplier = this.sizeMultiplier[unit] || this.sizeMultiplier['b'];
+        const maxSize = parseInt(this.maxSize, 10) * sizeMultiplier;
+
+        if (isNaN(maxSize)) {
+            const error = {
+                message: `Invalid max size parameter: ${this.maxSize}`,
+                code: this.Error.MAX_SIZE_EXCEEDED
+            }
+        }
+
+        if (file.size > maxSize) {
+            const error = {
+                message: `The file size must not exceed ${maxSize} bytes`,
+                code: this.Error.MAX_SIZE_EXCEEDED
+            }
+            throw error;
+        }
+    }
+
 }
 
 /**
@@ -126,8 +172,9 @@ Uploader.prototype.validateFile = function (file) {
  */
 Uploader.prototype.createFileFromRequest = function (request) {
     const requestBody = request.body;
+    const type = request.get('Content-Type') || 'application/octet-stream';
     const file = new File([requestBody], this.filename, {
-        type: 'application/octet-stream'
+        type
     });
     return file;
 }

@@ -75,18 +75,23 @@ function uploadHandler (req, res) {
     try {
         configureUploader(req.query);
     } catch (e) {
-        res.sendError(400, JSON.stringify(e.message), 'application/json');
+        res.sendError(500, JSON.stringify(e.message), 'application/json');
         return;
     }
     uploader.upload(req, function (err, uploadedFiles) {
         if (err && (!Array.isArray(uploadedFiles) || !uploadedFiles.length))  {
             let error;
+            let statusCode = 400; // Validation errors
             if (err instanceof Error) {
+                // This kind of errors should indicate
+                // a serious problem with the uploader
+                // and the status code should reflect that
+                statusCode = 500; // Internal "server" errors
                 error = err.message;
             } else {
                 error = err;
             }
-            res.sendError(400, JSON.stringify(error), 'application/json');
+            res.sendError(statusCode, JSON.stringify(error), 'application/json');
             return;
         }
 
@@ -174,11 +179,15 @@ function configureUploader(config) {
         uploadPath += '/';
     }
 
+    let allowedTypes;
+    if (typeof config.allowedTypes === 'string' && config.allowedTypes.length) {
+        allowedTypes = config.allowedTypes.split(',').filter(type => type.length > 0);
+    }
     const options = {
         inputName: config.input,
         filename: config.filename,
         maxSize: config.maxSize,
-        allowedMimeTypes: config.allowedTypes.split(','),
+        allowedMimeTypes: allowedTypes,
         dossier: rawDossier,
         uploadPath: uploadPath
     };
