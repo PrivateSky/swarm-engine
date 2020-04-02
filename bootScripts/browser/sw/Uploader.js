@@ -152,6 +152,7 @@ Uploader.prototype.validateFile = function (file) {
                 message: `Invalid max size parameter: ${this.maxSize}`,
                 code: this.Error.MAX_SIZE_EXCEEDED
             }
+            throw error;
         }
 
         if (file.size > maxSize) {
