@@ -65,4 +65,20 @@ function getChannelName(swarmTarget){
 
     return channelName;
 }
-module.exports = {prepareMessage, getChannelName, isUrl, isInMyHosts};
+
+function handleOptionsRequest(req,res, next){
+
+    const headers = {};
+    // IE8 does not allow domains to be specified, just the *
+    headers["Access-Control-Allow-Origin"] = req.headers.origin;
+    // headers["Access-Control-Allow-Origin"] = "*";
+    headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
+    headers["Access-Control-Allow-Credentials"] = true;
+    headers["Access-Control-Max-Age"] = '3600'; //one hour
+    headers["Access-Control-Allow-Headers"] = `Content-Type, Content-Length, Access-Control-Allow-Origin, User-Agent, ${signatureHeaderName}`;
+    res.set(headers);
+    res.status(200);
+    res.end();
+}
+
+module.exports = {prepareMessage, getChannelName, isUrl, isInMyHosts, handleOptionsRequest};
