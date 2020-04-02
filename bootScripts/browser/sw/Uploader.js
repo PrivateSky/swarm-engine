@@ -1,4 +1,4 @@
-const Buffer = require('buffer').Buffer;
+const FileReadableStreamAdapter = require('./FileReadableStreamAdapter');
 
 /**
  * Constructor
@@ -192,13 +192,11 @@ Uploader.prototype.uploadFile = function (file, callback) {
     }
 
     const writeFile = () => {
-        file.arrayBuffer().then((buffer) => {
-            const buf = new Buffer(buffer);
-            this.dossier.writeFile(destFile, buf, (err) => {
-                callback(err, {
-                    path: destFile
-                });
-            })
+        const stream = new FileReadableStreamAdapter(file);
+        this.dossier.writeFile(destFile, stream, (err) => {
+            callback(err, {
+                path: destFile
+            });
         })
     }
 

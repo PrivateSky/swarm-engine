@@ -80,18 +80,22 @@ function uploadHandler (req, res) {
     }
     uploader.upload(req, function (err, uploadedFiles) {
         if (err && (!Array.isArray(uploadedFiles) || !uploadedFiles.length))  {
-            let error;
             let statusCode = 400; // Validation errors
+
             if (err instanceof Error) {
                 // This kind of errors should indicate
                 // a serious problem with the uploader
                 // and the status code should reflect that
                 statusCode = 500; // Internal "server" errors
-                error = err.message;
-            } else {
-                error = err;
             }
-            res.sendError(statusCode, JSON.stringify(error), 'application/json');
+
+            res.sendError(statusCode, JSON.stringify(err, (key, value) => {
+                if (value instanceof Error) {
+                    return value.message;
+                }
+
+                return value;
+            }), 'application/json');
             return;
         }
 
