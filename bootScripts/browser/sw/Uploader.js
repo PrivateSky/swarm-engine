@@ -27,11 +27,12 @@ function Uploader(options) {
 }
 
 Uploader.prototype.Error = {
+    UNKNOWN: -1,
     NO_FILES: 10,
     INVALID_FILE: 20,
     INVALID_TYPE: 21,
     MAX_SIZE_EXCEEDED: 22,
-    FILE_EXISTS: 30
+    FILE_EXISTS: 30,
 };
 
 Uploader.prototype.configure = function (options) {
@@ -258,7 +259,7 @@ Uploader.prototype.upload = function (request, callback) {
 
     const filesUploaded = [];
 
-    function uploadFileCallback(file, err) {
+    const uploadFileCallback = (file, err) => {
 
         const _callback = function (err, result) {
             const srcFile = {
@@ -267,6 +268,13 @@ Uploader.prototype.upload = function (request, callback) {
             };
 
             if (err) {
+                if (err instanceof Error || typeof err === 'string') {
+                    err = {
+                        message: err.message,
+                        code: this.Error.UNKNOWN
+                    }
+                }
+
                 filesUploaded.push({
                     file: srcFile,
                     error: err
@@ -289,9 +297,9 @@ Uploader.prototype.upload = function (request, callback) {
         };
 
         if (err) {
-            return _callback(err);
+            return _callback.call(this, err);
         }
-        return _callback;
+        return _callback.bind(this);
     }
 
     for (const file of files) {
