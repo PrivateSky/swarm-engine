@@ -105,6 +105,34 @@ function uploadHandler (req, res) {
     });
 }
 
+function downloadHanlder(req, res) {
+    let path = req.path.split('/').slice(2); // remove the "/download" part
+    path = path.filter(segment => segment.length > 0);
+    if (!path.length) {
+        return res.sendError(404, "File not found");
+
+    }
+    path = '/' + path.join('/');
+    rawDossier.readFile(path, (err, data) => {
+        if (err instanceof Error) {
+            if (err.message.indexOf('could not be found') !== -1) {
+                return res.sendError(404, "File not found");
+            }
+
+            return res.sendError(500, err.message);
+        } else if (err) {
+            return res.sendError(500, Object.ptototype.toString.call(err));
+        }
+
+        // Extract the filename
+        const filename = path.split('/').pop();
+
+        res.status(200);
+        res.set("Content-Disposition", `attachment; filename="${filename}"`);
+        res.send(data);
+    });
+}
+
 /*
 * just adding the event listener to catch all the requests
 */
@@ -114,13 +142,15 @@ server.post("/forward-zeromq/:channelName", forwardMessageHandler);
 server.post("/send-message/:channelName", sendMessageHandler);
 server.get("/receive-message/:channelName", receiveMessageHandler);
 server.post('/upload', uploadHandler);
-server.get('/upload', function (req, res) {
-    rawDossier.listFiles('/data/uploads', (err, files) => {
-        res.status(200);
-        res.set("Content-Type", "text/plain");
-        res.send(files.join('\n'));
-    })
-});
+server.get('/download/*', downloadHanlder);
+
+//server.get('/upload', function (req, res) {
+    //rawDossier.listFiles('/data/uploads', (err, files) => {
+        //res.status(200);
+        //res.set("Content-Type", "text/plain");
+        //res.send(files.join('\n'));
+    //})
+//});
 
 
 server.use(function(req,res, next){
