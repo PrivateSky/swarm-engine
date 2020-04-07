@@ -204,17 +204,7 @@ Uploader.prototype.uploadFile = function (file, callback) {
 
     // Check that file doesn't exist
     this.dossier.listFiles(uploadPath, (err, files) => {
-        // An "invalid path" error is permitted since it means
-        // that the destination file path hasn't been created yet
-        if (err && err.message.indexOf('Invalid path') === -1) {
-            return callback(err, {
-                path: destFile
-            })
-        }
-
-        // If the upload directory exists, check that
-        // the file doesn't exist
-        if (!err && files) {
+        if (files) {
             if (files.indexOf(file.name) !== -1) {
                 const err = {
                     message: 'File exists',
