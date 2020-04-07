@@ -30,10 +30,10 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
 		const listFiles = promisify(this.rawDossier.listFiles);
 		const readFile = promisify(this.rawDossier.readFile);
 
-		let fileList = await listFiles("/" + EDFS.constants.CSB.CONSTITUTION_FOLDER);
-		fileList = bundles.filter(bundle => fileList.includes(`${bundle}`))
-			.map(bundle => `/${EDFS.constants.CSB.CONSTITUTION_FOLDER}/${bundle}`);
+		let fileList = await listFiles("/" + EDFS.constants.CSB.CODE_FOLDER + "/" + EDFS.constants.CSB.CONSTITUTION_FOLDER);
 
+		fileList = bundles.filter(bundle => fileList.includes(`${bundle}`))
+			.map(bundle => `/${EDFS.constants.CSB.CODE_FOLDER + "/" + EDFS.constants.CSB.CONSTITUTION_FOLDER}/${bundle}`);
 
 		if (fileList.length !== bundles.length) {
 			const message = `Some bundles missing. Expected to have ${JSON.stringify(bundles)} but got only ${JSON.stringify(fileList)}`;
@@ -43,6 +43,7 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
 				console.log(message);
 			}
 		}
+
 
 		for (let i = 0; i < fileList.length; i++) {
 			var fileContent = await readFile(fileList[i]);
