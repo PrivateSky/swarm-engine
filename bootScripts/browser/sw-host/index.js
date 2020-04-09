@@ -101,7 +101,7 @@ self.addEventListener('message', function (event) {
                 rawDossier.listFiles(CONSTANTS.APP_FOLDER, (err, files) => {
                     if (files.length > 0 && files.indexOf(`${CONSTANTS.APP_FOLDER}/index.html`)!==1) {
                         rawDossier.readFile(`${CONSTANTS.APP_FOLDER}/index.html`, (err, content) => {
-                                event.ports[0].postMessage({status: 'finished', content: content.toString()});
+                            event.ports[0].postMessage({status: 'finished', content: content.toString()});
                         })
                     } else {
                         let error = "No app found";
@@ -130,7 +130,7 @@ function initMiddleware(){
     server.post("/send-message/:channelName", sendMessageHandler);
     server.get("/receive-message/:channelName", receiveMessageHandler);
     server.use("*","OPTIONS",UtilFunctions.handleOptionsRequest);
-    server.get("*",rawDossierHlp.handleLoadApp(CONSTANTS.APP_FOLDER));
+    server.get("*",rawDossierHlp.handleLoadApp(CONSTANTS.APP_FOLDER, CONSTANTS.CODE_FOLDER));
 }
 
 
