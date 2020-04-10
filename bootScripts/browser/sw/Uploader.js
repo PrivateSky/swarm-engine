@@ -7,6 +7,10 @@ const FileReadableStreamAdapter = require('./FileReadableStreamAdapter');
  * @param {string} options.inputName
  * @param {RawDossier} options.dossier
  * @param {string} options.uploadPath
+ * @param {string} options.filename
+ * @param {Array} options.allowedMimeTypes
+ * @param {string} options.maxSize
+ * @param {Boolean} options.preventOverwrite
  */
 function Uploader(options) {
     this.inputName = null;
@@ -15,6 +19,7 @@ function Uploader(options) {
     this.maxSize = null; // When not null file size validation is done
     this.allowedMimeTypes = null; // When not null, mime type validation is done
     this.uploadPath = null;
+    this.preventOverwrite = false;
     this.uploadMultipleFiles = false;
     this.sizeMultiplier = {
         'b': 1,
@@ -54,6 +59,7 @@ Uploader.prototype.configure = function (options) {
     this.inputName = options.inputName;
     this.dossier = options.dossier;
     this.uploadPath = options.uploadPath;
+    this.preventOverwrite = Boolean(options.preventOverwrite);
     if (this.inputName) {
         this.uploadMultipleFiles = this.inputName.substr(-2) === '[]';
     }
@@ -62,7 +68,7 @@ Uploader.prototype.configure = function (options) {
         this.maxSize = options.maxSize;
     }
 
-    if (Array.isArray(options.allowedMimeTypes) && options.allowedMimeTypes.length) {
+    if (Array.isArray(options.allowedMimeTypes)) {
         this.allowedMimeTypes = options.allowedMimeTypes;
     }
 }
@@ -76,7 +82,7 @@ Uploader.prototype.validateRequestBody = function (body) {
     const inputName = this.inputName;
     const filename = this.filename;
 
-    if (typeof body === 'object' && !inputName) {
+    if (typeof body === 'object' && body instanceof FormData && !inputName) {
         const error = {
             message: `No files have been uploaded or the "input" parameter hasn't been set`,
             code: this.Error.NO_FILES
@@ -84,7 +90,7 @@ Uploader.prototype.validateRequestBody = function (body) {
         throw error;
     }
 
-    if (typeof body === 'string' && !filename) {
+    if (body && !(body instanceof FormData) && !filename) {
         const error = {
             message: `No files have been uploaded or the "filename" parameter hasn't been set`,
             code: this.Error.NO_FILES
@@ -93,7 +99,7 @@ Uploader.prototype.validateRequestBody = function (body) {
     }
 
     const __uploadExists = () => {
-        if (typeof body === 'object') {
+        if (typeof body === 'object' && body instanceof FormData) {
             if (this.uploadMultipleFiles) {
                 return Array.isArray(body[inputName]);
             }
@@ -101,7 +107,7 @@ Uploader.prototype.validateRequestBody = function (body) {
             return body[inputName] instanceof File;
         }
 
-        return body.length > 0;
+        return body;
     }
 
     if (!__uploadExists()) {
@@ -175,6 +181,7 @@ Uploader.prototype.validateFile = function (file) {
 Uploader.prototype.createFileFromRequest = function (request) {
     const requestBody = request.body;
     const type = request.get('Content-Type') || 'application/octet-stream';
+
     const file = new File([requestBody], this.filename, {
         type
     });
@@ -202,22 +209,26 @@ Uploader.prototype.uploadFile = function (file, callback) {
         })
     }
 
-    // Check that file doesn't exist
-    this.dossier.listFiles(uploadPath, (err, files) => {
-        if (files) {
-            if (files.indexOf(file.name) !== -1) {
-                const err = {
-                    message: 'File exists',
-                    code: this.Error.FILE_EXISTS
+    if (this.preventOverwrite) {
+        // Check that file doesn't exist
+        this.dossier.listFiles(uploadPath, (err, files) => {
+            if (files) {
+                if (files.indexOf(file.name) !== -1) {
+                    const err = {
+                        message: 'File exists',
+                        code: this.Error.FILE_EXISTS
+                    }
+                    return callback(err, {
+                        path: destFile
+                    });
                 }
-                return callback(err, {
-                    path: destFile
-                });
             }
-        }
 
+            writeFile();
+        });
+    } else {
         writeFile();
-    });
+    }
 
 }
 
@@ -233,7 +244,7 @@ Uploader.prototype.upload = function (request, callback) {
         return callback(e);
     }
 
-    const isMultipartUpload = typeof request.body === 'object';
+    const isMultipartUpload = (typeof request.body === 'object' && request.body instanceof FormData);
     let files = [];
 
     if (isMultipartUpload) {

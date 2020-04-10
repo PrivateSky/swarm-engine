@@ -236,6 +236,8 @@ function configureUploader(config) {
     let allowedTypes;
     if (typeof config.allowedTypes === 'string' && config.allowedTypes.length) {
         allowedTypes = config.allowedTypes.split(',').filter(type => type.length > 0);
+    } else {
+        allowedTypes = [];
     }
     const options = {
         inputName: config.input,
@@ -243,7 +245,8 @@ function configureUploader(config) {
         maxSize: config.maxSize,
         allowedMimeTypes: allowedTypes,
         dossier: rawDossier,
-        uploadPath: uploadPath
+        uploadPath: uploadPath,
+        preventOverwrite: config.preventOverwrite
     };
 
     if (!uploader) {
