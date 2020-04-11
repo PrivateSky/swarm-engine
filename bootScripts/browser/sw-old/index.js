@@ -1,15 +1,13 @@
-const SWBootScript = require("./SWBootScript");
 const server = require("ssapp-middleware").getMiddleware();
+const SSappSWBootScript = require("./SSappSWBootScript");
 const ChannelsManager = require("../../../utils/SWChannelsManager").getChannelsManager();
 const UtilFunctions = require("../../../utils/utilFunctions");
-const RawDossierHelper = require("./RawDossierHelper");
 const Uploader = require("./Uploader");
-const EDFS = require("edfs");
-const CONSTANTS = EDFS.constants.CSB;
+const EDFS_CONSTANTS = require('edfs').constants;
+
 let bootScript = null;
 let rawDossier = null;
-let rawDossierHlp = null;
-
+let uploader = null;
 
 function createChannelHandler (req, res) {
     ChannelsManager.createChannel(req.params.channelName, function (err) {
@@ -33,6 +31,7 @@ function forwardMessageHandler(req, res){
 }
 
 function sendMessageHandler (req, res) {
+
     UtilFunctions.prepareMessage(req, function (err, bodyAsBuffer) {
 
         if (err) {
@@ -71,64 +70,6 @@ function receiveMessageHandler (req, res) {
         res.end();
     });
 }
-
-self.addEventListener('activate', function (event) {
-    console.log("Activating host service worker", event);
-
-    try {
-        clients.claim();
-    } catch (err) {
-        console.log(err);
-    }
-});
-
-self.addEventListener('message', function (event) {
-    if (event.target instanceof ServiceWorkerGlobalScope) {
-        if (event.data.action === "activate") {
-            event.ports[0].postMessage({status: 'empty'});
-        }
-
-        if (event.data.seed) {
-            bootScript = new SWBootScript(event.data.seed);
-            bootScript.boot((err, _rawDossier) => {
-
-                if(err){
-                    throw err;
-                }
-
-                rawDossier = _rawDossier;
-                rawDossierHlp = new RawDossierHelper(rawDossier);
-                initMiddleware();
-                event.ports[0].postMessage({status: 'finished'});
-                afterBootScripts();
-            });
-        }
-    }
-});
-
-server.init(self);
-
-function initMiddleware(){
-    server.put("/create-channel/:channelName", createChannelHandler);
-    server.post("/forward-zeromq/:channelName", forwardMessageHandler);
-    server.post("/send-message/:channelName", sendMessageHandler);
-    server.get("/receive-message/:channelName", receiveMessageHandler);
-    server.post('/upload', uploadHandler);
-    server.get('/download/*', downloadHandler);
-    server.use("*","OPTIONS",UtilFunctions.handleOptionsRequest);
-    server.get("*",rawDossierHlp.handleLoadApp("/"+CONSTANTS.APP_FOLDER, "/"+CONSTANTS.CODE_FOLDER));
-}
-
-
-function afterBootScripts(){
-    console.log("$$.swarms.describe");
-    $$.swarms.describe("listDossierFiles", {
-        start: function(path){
-            rawDossier.listFiles(path, this.return);
-        }
-    });
-}
-
 
 function uploadHandler (req, res) {
     try {
@@ -221,6 +162,61 @@ function downloadHandler(req, res) {
     });
 }
 
+/*
+* just adding the event listener to catch all the requests
+*/
+
+server.put("/create-channel/:channelName", createChannelHandler);
+server.post("/forward-zeromq/:channelName", forwardMessageHandler);
+server.post("/send-message/:channelName", sendMessageHandler);
+server.get("/receive-message/:channelName", receiveMessageHandler);
+server.post('/upload', uploadHandler);
+server.get('/download/*', downloadHandler);
+
+server.use(function(req,res, next){
+    if(req.method.toUpperCase()!=="OPTIONS"){
+        next();
+    }
+    else{
+        console.log("OPTIONS request");
+        const headers = {};
+        // IE8 does not allow domains to be specified, just the *
+        headers["Access-Control-Allow-Origin"] = req.headers.origin;
+        // headers["Access-Control-Allow-Origin"] = "*";
+        headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
+        headers["Access-Control-Allow-Credentials"] = true;
+        headers["Access-Control-Max-Age"] = '3600'; //one hour
+        headers["Access-Control-Allow-Headers"] = `Content-Type, Content-Length, Access-Control-Allow-Origin, User-Agent, ${signatureHeaderName}`;
+        res.set(headers);
+        res.status(200);
+        res.end();
+    }
+})
+
+// Uncomment this during development to forward requests
+// to host network if you're planning to load the application
+// from localhost
+//server.useDefault();
+
+/*
+* if no previous handler response to the event it means that the url doesn't exit
+*
+**/
+server.use(function (req, res, next) {
+    let requestedDomain = new URL(req.originalUrl).host;
+    server.requestedHosts.delete(requestedDomain);
+    res.status(404);
+    res.end();
+});
+
+server.init(self);
+
+
+/**
+ * Configure uploader
+ *
+ * @param {object} config
+ */
 function configureUploader(config) {
     config = config || {};
 
@@ -259,3 +255,52 @@ function configureUploader(config) {
         uploader.configure(options);
     }
 }
+
+
+self.addEventListener('activate', function (event) {
+    console.log("Activating service worker", event);
+
+    try {
+        clients.claim();
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+self.addEventListener('message', function(event) {
+    if(event.target instanceof ServiceWorkerGlobalScope){
+        if(event.data.action === "activate"){
+            event.ports[0].postMessage({status: 'empty'});
+        }
+
+        if(event.data.seed){
+            if (rawDossier) {
+                return;
+            }
+
+            //TODO: check if this is not the same code with swHostScript
+            bootScript = new SSappSWBootScript(event.data.seed);
+            bootScript.boot((err, _rawDossier) => {
+                if (err) {
+                    console.error(err);
+                    event.ports[0].postMessage({error: err});
+                    return;
+                }
+
+                rawDossier = _rawDossier
+                rawDossier.listFiles("app", (err, files) => {
+                    if (err) {
+                        console.error(err);
+                    }
+
+                    console.log(files);
+                    rawDossier.readFile("app/index.html", (err, content) => {
+                        console.log(content.toString());
+                        event.ports[0].postMessage({status: 'initialized'});
+                    })
+                })
+            });
+
+        }
+    }
+});

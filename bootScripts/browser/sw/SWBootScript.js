@@ -1,4 +1,4 @@
-function HostSWBootScript(seed) {
+function SWBootScript(seed) {
 
     console.log("Booting host...");
     const seeds = {};
@@ -56,7 +56,7 @@ function HostSWBootScript(seed) {
 
 }
 
-module.exports = HostSWBootScript;
+module.exports = SWBootScript;
 
 
 
