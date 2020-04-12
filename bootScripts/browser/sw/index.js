@@ -9,6 +9,7 @@ const CONSTANTS = EDFS.constants.CSB;
 let bootScript = null;
 let rawDossier = null;
 let rawDossierHlp = null;
+let uploader = null;
 
 
 function createChannelHandler (req, res) {
@@ -115,6 +116,7 @@ function initMiddleware(){
     server.get("/receive-message/:channelName", receiveMessageHandler);
     server.post('/upload', uploadHandler);
     server.get('/download/*', downloadHandler);
+    server.get('/apps/*', rawDossierHlp.handleLoadApp());
     server.use("*","OPTIONS",UtilFunctions.handleOptionsRequest);
     server.get("*",rawDossierHlp.handleLoadApp("/"+CONSTANTS.APP_FOLDER, "/"+CONSTANTS.CODE_FOLDER));
 }
