@@ -7,11 +7,26 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
     let receivingHost = Array.isArray(communicationAddrs) && communicationAddrs.length > 0 ? communicationAddrs[0] : "http://127.0.0.1";
     receivingChannelName = receivingChannelName || generateChannelName();
 
+    function testIfZeroMQAvailable(suplimentaryCondition){
+        let available = true;
+        try{
+            let zmqName = "zeromq";
+            require(zmqName);
+        }catch(err){
+            console.log("Zeromq not available at this moment.");
+            available = false;
+        }
+        if(typeof suplimentaryCondition !== "undefined"){
+            available = available && suplimentaryCondition;
+        }
+        return available;
+    }
+
     let setup = () => {
         //injecting necessary http methods
         require("../../psk-http-client");
 
-        const opts = {autoCreate: true, enableForward: typeof zeroMQAddress !== "undefined", publicSignature: "none"};
+        const opts = {autoCreate: true, enableForward: testIfZeroMQAvailable(typeof zeroMQAddress !== "undefined"), publicSignature: "none"};
 
         console.log(`\n[***] Using channel "${receivingChannelName}" on "${receivingHost}".\n`);
         //maybe instead of receivingChannelName we sould use our identity? :-??
@@ -28,7 +43,7 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
         }
 
 
-        if (typeof zeroMQAddress === "undefined") {
+        if (testIfZeroMQAvailable(typeof zeroMQAddress === "undefined")) {
             $$.remote[inbound].on("*", "*", "*", (err, swarmSerialization) => {
                 if (err) {
                     console.log("Got an error from our channel", err);
