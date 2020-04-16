@@ -44,7 +44,7 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
         }
 
 
-        if (testIfZeroMQAvailable(typeof zeroMQAddress === "undefined")) {
+        if (testIfZeroMQAvailable(typeof zeroMQAddress !== "undefined")) {
             //let's connect to zmq
             const reqFactory = require("virtualmq").getVMQRequestFactory(receivingHost, zeroMQAddress);
             reqFactory.receiveMessageFromZMQ($$.remote.base64Encode(receivingChannelName), opts.publicSignature, (...args) => {
