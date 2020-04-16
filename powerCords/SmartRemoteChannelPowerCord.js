@@ -9,13 +9,14 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
 
     function testIfZeroMQAvailable(suplimentaryCondition){
         let available = true;
+        let zmqModule;
         try{
             let zmqName = "zeromq";
-            require(zmqName);
+            zmqModule = require(zmqName);
         }catch(err){
             console.log("Zeromq not available at this moment.");
-            available = false;
         }
+        available = typeof zmqModule !== "undefined";
         if(typeof suplimentaryCondition !== "undefined"){
             available = available && suplimentaryCondition;
         }
@@ -44,6 +45,15 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
 
 
         if (testIfZeroMQAvailable(typeof zeroMQAddress === "undefined")) {
+            //let's connect to zmq
+            const reqFactory = require("virtualmq").getVMQRequestFactory(receivingHost, zeroMQAddress);
+            reqFactory.receiveMessageFromZMQ($$.remote.base64Encode(receivingChannelName), opts.publicSignature, (...args) => {
+                console.log("zeromq connection established");
+            }, (channelName, swarmSerialization) => {
+                console.log("Look", channelName, swarmSerialization);
+                handlerSwarmSerialization(swarmSerialization);
+            });
+        } else {
             $$.remote[inbound].on("*", "*", "*", (err, swarmSerialization) => {
                 if (err) {
                     console.log("Got an error from our channel", err);
@@ -54,15 +64,6 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
                     swarmSerialization = toArrayBuffer(swarmSerialization);
                 }
 
-                handlerSwarmSerialization(swarmSerialization);
-            });
-        } else {
-            //let's connect to zmq
-            const reqFactory = require("virtualmq").getVMQRequestFactory(receivingHost, zeroMQAddress);
-            reqFactory.receiveMessageFromZMQ($$.remote.base64Encode(receivingChannelName), opts.publicSignature, (...args) => {
-                console.log("zeromq connection established");
-            }, (channelName, swarmSerialization) => {
-                console.log("Look", channelName, swarmSerialization);
                 handlerSwarmSerialization(swarmSerialization);
             });
         }
