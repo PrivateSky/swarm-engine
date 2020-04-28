@@ -135,8 +135,6 @@ function initState(event) {
         return Promise.resolve(event);
     }
 
-    const identity = self.registration.scope.split('/').pop();
-
     return requestSeedFromClient().then((seed) => {
         return new Promise((resolve, reject) => {
             bootSWEnvironment(seed, (err) => {
@@ -169,6 +167,8 @@ function requestSeedFromClient() {
         let requestSeedPromise = new Promise((resolve, reject) => {
             seedResolver = resolve;
         })
+
+        const identity = self.registration.scope.split('/').pop();
 
         // Request the seed
         for (const client of clients) {
