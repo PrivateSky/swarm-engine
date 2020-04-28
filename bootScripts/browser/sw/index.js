@@ -10,6 +10,7 @@ let bootScript = null;
 let rawDossier = null;
 let rawDossierHlp = null;
 let uploader = null;
+let seedResolver = null;
 
 
 function createChannelHandler (req, res) {
@@ -75,39 +76,135 @@ function receiveMessageHandler (req, res) {
 
 self.addEventListener('activate', function (event) {
     console.log("Activating host service worker", event);
-
-    try {
-        clients.claim();
-    } catch (err) {
-        console.log(err);
-    }
+    event.waitUntil(clients.claim());
 });
 
 self.addEventListener('message', function (event) {
-    if (event.target instanceof ServiceWorkerGlobalScope) {
-        if (event.data.action === "activate") {
-            event.ports[0].postMessage({status: 'empty'});
+    if (!(event.target instanceof ServiceWorkerGlobalScope)) {
+        return;
+    }
+
+    const data = event.data;
+    const comPort = event.ports[0];
+
+    if (data.action === "activate") {
+        comPort.postMessage({status: 'empty'});
+    }
+
+    if (data.seed) {
+        // If a seed promise resolver exists
+        // it means that the state is waiting to be initialized
+        // in the fetch request event handler
+        if (seedResolver) {
+            // Resolve the seed request
+            seedResolver(data.seed);
+
+            // Prevent multiple resolves in case
+            // multiple tabs are open
+            seedResolver = null;
+            return;
         }
 
-        if (event.data.seed) {
-            bootScript = new SWBootScript(event.data.seed);
-            bootScript.boot((err, _rawDossier) => {
-
-                if(err){
+        if (!rawDossier) {
+            bootSWEnvironment(data.seed, (err) => {
+                if (err) {
                     throw err;
                 }
-
-                rawDossier = _rawDossier;
-                rawDossierHlp = new RawDossierHelper(rawDossier);
-                initMiddleware();
-                event.ports[0].postMessage({status: 'finished'});
+                comPort.postMessage({status: 'finished'});
                 afterBootScripts();
-            });
+            })
         }
     }
 });
 
-server.init(self);
+self.addEventListener('fetch', (event) => {
+    event.respondWith(initState(event).then(server.handleEvent));
+});
+
+/**
+ * Initialize the service worker state
+ *
+ * If the dossier isn't loaded, request a seed
+ * and boot the service worker environment
+ *
+ * @param {FetchEvent} event
+ * @return {Promise}
+ */
+function initState(event) {
+    if (rawDossier) {
+        return Promise.resolve(event);
+    }
+
+    const identity = self.registration.scope.split('/').pop();
+
+    return requestSeedFromClient().then((seed) => {
+        return new Promise((resolve, reject) => {
+            bootSWEnvironment(seed, (err) => {
+                if (err) {
+                    return reject(err);
+                }
+
+                resolve(event);
+            })
+        })
+    });
+}
+
+/**
+ * Request a seed by posting a seed request
+ * to all visible windows
+ *
+ * @return {Promise} The promise will be resolved
+ *                   when a client will post back the
+ *                   the requested seed in the
+ *                   "on message" handler
+ */
+function requestSeedFromClient() {
+    return clients.matchAll({
+        includeUncontrolled: true,
+        type: 'window'
+    }).then((clients) => {
+        // This promise will be resolved
+        // once the loader posts back our seed in the "on message" handler
+        let requestSeedPromise = new Promise((resolve, reject) => {
+            seedResolver = resolve;
+        })
+
+        // Request the seed
+        for (const client of clients) {
+            // Send a seed request only to visible windows
+            if (client.visibilityState !== 'visible') {
+                continue;
+            }
+
+            client.postMessage({
+                query: 'seed',
+                identity: identity,
+            });
+        }
+        return requestSeedPromise;
+    })
+}
+
+/**
+ * @param {string} seed
+ * @param {callback} callback
+ */
+function bootSWEnvironment(seed, callback) {
+    bootScript = new SWBootScript(seed);
+    bootScript.boot((err, _rawDossier) => {
+        if(err){
+            return callback(err);
+        }
+
+        rawDossier = _rawDossier;
+        rawDossierHlp = new RawDossierHelper(rawDossier);
+        initMiddleware();
+        callback();
+    });
+}
+
+
 
 function initMiddleware(){
     server.put("/create-channel/:channelName", createChannelHandler);
