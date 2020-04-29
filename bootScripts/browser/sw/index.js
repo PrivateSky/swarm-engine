@@ -111,7 +111,6 @@ self.addEventListener('message', function (event) {
                     throw err;
                 }
                 comPort.postMessage({status: 'finished'});
-                afterBootScripts();
             })
         }
     }
@@ -216,16 +215,6 @@ function initMiddleware(){
     server.get('/apps/*', rawDossierHlp.handleLoadApp());
     server.use("*","OPTIONS",UtilFunctions.handleOptionsRequest);
     server.get("*",rawDossierHlp.handleLoadApp("/"+CONSTANTS.APP_FOLDER, "/"+CONSTANTS.CODE_FOLDER));
-}
-
-
-function afterBootScripts(){
-    console.log("$$.swarms.describe");
-    $$.swarms.describe("listDossierFiles", {
-        start: function(path){
-            rawDossier.listFiles(path, this.return);
-        }
-    });
 }
 
 

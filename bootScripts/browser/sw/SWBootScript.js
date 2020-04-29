@@ -7,7 +7,7 @@ function SWBootScript(seed) {
      this.boot = function(callback){
         const BootEngine = require("../../BootEngine");
 
-        const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["webshims.js","pskruntime.js"]);
+        const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["webshims.js","pskruntime.js"],["domain.js"]);
         bootter.boot((err, archive)=>{
             if(err){
                 console.log(err);
