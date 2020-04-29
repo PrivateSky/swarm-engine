@@ -7,7 +7,6 @@ const Uploader = require("./Uploader");
 const EDFS = require("edfs");
 const CONSTANTS = EDFS.constants.CSB;
 let bootScript = null;
-let rawDossier = null;
 let rawDossierHlp = null;
 let uploader = null;
 let seedResolver = null;
@@ -105,7 +104,7 @@ self.addEventListener('message', function (event) {
             return;
         }
 
-        if (!rawDossier) {
+        if (!global.rawDossier) {
             bootSWEnvironment(data.seed, (err) => {
                 if (err) {
                     throw err;
@@ -130,7 +129,7 @@ self.addEventListener('fetch', (event) => {
  * @return {Promise}
  */
 function initState(event) {
-    if (rawDossier) {
+    if (global.rawDossier) {
         return Promise.resolve(event);
     }
 
@@ -196,13 +195,12 @@ function bootSWEnvironment(seed, callback) {
             return callback(err);
         }
 
-        rawDossier = _rawDossier;
-        rawDossierHlp = new RawDossierHelper(rawDossier);
+        global.rawDossier = _rawDossier;
+        rawDossierHlp = new RawDossierHelper(global.rawDossier);
         initMiddleware();
         callback();
     });
 }
-
 
 
 function initMiddleware(){
@@ -288,7 +286,7 @@ function downloadHandler(req, res) {
         return nativeStream;
     }
 
-    rawDossier.createReadStream(path, (err, stream) => {
+    global.rawDossier.createReadStream(path, (err, stream) => {
         if (err instanceof Error) {
             if (err.message.indexOf('could not be found') !== -1) {
                 return res.sendError(404, "File not found");
@@ -336,7 +334,7 @@ function configureUploader(config) {
         filename: config.filename,
         maxSize: config.maxSize,
         allowedMimeTypes: allowedTypes,
-        dossier: rawDossier,
+        dossier: global.rawDossier,
         uploadPath: uploadPath,
         preventOverwrite: config.preventOverwrite
     };
