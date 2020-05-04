@@ -82,24 +82,24 @@ Uploader.prototype.validateRequestBody = function (body) {
     const inputName = this.inputName;
     const filename = this.filename;
 
-    if (typeof body === 'object' && body instanceof FormData && !inputName) {
+    if (this.isMultipartUpload && !inputName) {
         const error = {
             message: `No files have been uploaded or the "input" parameter hasn't been set`,
             code: this.Error.NO_FILES
-        }
+        };
         throw error;
     }
 
-    if (body && !(body instanceof FormData) && !filename) {
+    if (!this.isMultipartUpload &&  !filename) {
         const error = {
             message: `No files have been uploaded or the "filename" parameter hasn't been set`,
             code: this.Error.NO_FILES
-        }
+        };
         throw error;
     }
 
     const __uploadExists = () => {
-        if (typeof body === 'object' && body instanceof FormData) {
+        if (this.isMultipartUpload){
             if (this.uploadMultipleFiles) {
                 return Array.isArray(body[inputName]);
             }
@@ -238,16 +238,16 @@ Uploader.prototype.uploadFile = function (file, callback) {
  * @param {callback} callback
  */
 Uploader.prototype.upload = function (request, callback) {
+	this.isMultipartUpload = (typeof request.body === 'object' && !(request.body instanceof ArrayBuffer));
     try {
         this.validateRequestBody(request.body);
     } catch (e) {
         return callback(e);
     }
 
-    const isMultipartUpload = (typeof request.body === 'object' && request.body instanceof FormData);
     let files = [];
 
-    if (isMultipartUpload) {
+    if (this.isMultipartUpload) {
         if (!this.uploadMultipleFiles) {
             files.push(request.body[this.inputName]);
         } else {
