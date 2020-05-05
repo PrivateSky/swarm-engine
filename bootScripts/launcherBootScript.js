@@ -14,7 +14,7 @@ console.log(`Launcher is using ${seed} as SEED`);
 function boot() {
     const BootEngine = require("./BootEngine");
 
-    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "virtualMQ.js", "edfsBar.js"], ["blockchain.js"]);
+    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "pskWebServer.js", "edfsBar.js"], ["blockchain.js"]);
     $$.log("Launcher booting process started");
     bootter.boot(function (err, archive) {
         if (err) {

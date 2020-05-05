@@ -1,5 +1,5 @@
 require("../../../../psknode/bundles/pskruntime.js");
-require("../../../../psknode/bundles/virtualMQ.js");
+require("../../../../psknode/bundles/pskWebServer.js");
 const path = require("path");
 
 const se = pskruntimeRequire("swarm-engine");

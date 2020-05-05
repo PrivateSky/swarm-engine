@@ -28,7 +28,7 @@ if (typeof config.workspace !== "undefined" && config.workspace !== "undefined")
 function boot() {
     const BootEngine = require("./BootEngine");
 
-    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "virtualMQ.js", "edfsBar.js"], ["blockchain.js"]);
+    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "pskWebServer.js", "edfsBar.js"], ["blockchain.js"]);
     bootter.boot(function (err, archive) {
         if (err) {
             console.log(err);
