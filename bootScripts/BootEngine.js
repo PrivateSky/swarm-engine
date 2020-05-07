@@ -32,8 +32,7 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
 		const readFile = promisify(this.rawDossier.readFile);
 
 		let fileList = await listFiles(pskPath.join(EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER));
-
-		fileList = bundles.filter(bundle => fileList.includes(bundle))
+		fileList = bundles.filter(bundle => fileList.includes(bundle) || fileList.includes(`/${bundle}`))
 			.map(bundle => pskPath.join(EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER, bundle));
 
 		if (fileList.length !== bundles.length) {
