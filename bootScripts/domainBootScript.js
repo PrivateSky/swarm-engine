@@ -117,7 +117,7 @@ function plugPowerCords() {
                 const EDFS = require("edfs");
                 const pskPath = require("swarmutils").path;
                 const rawDossier = self.edfs.loadRawDossier(self.seed);
-                rawDossier.readFile(pskPath.join(EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER , "threadBoot.js"), (err, fileContents) => {
+                rawDossier.readFile(pskPath.join("/", EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER , "threadBoot.js"), (err, fileContents) => {
                     if (err) {
                         throw err;
                     }
