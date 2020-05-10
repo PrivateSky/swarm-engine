@@ -53,24 +53,29 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
 
 	this.boot = function (callback) {
 		const __boot = async () => {
-			const seed = await getSeed();
-			edfs = await getEDFS();
-			this.rawDossier = edfs.loadRawDossier(seed);
-			try{
-                await evalBundles(runtimeBundles);
-            }catch(err)
-            {
+            const seed = await getSeed();
+            edfs = await getEDFS();
+
+            const loadRawDossier = promisify(edfs.loadRawDossier);
+            try {
+                this.rawDossier = await loadRawDossier(seed);
+            } catch (err) {
                 console.log(err);
             }
-			await initializeSwarmEngine();
-			if (typeof constitutionBundles !== "undefined") {
-				try{
-					await evalBundles(constitutionBundles, true);
-				}catch(err)
-				{
-					console.log(err);
-				}
-			}
+
+            try {
+                await evalBundles(runtimeBundles);
+            } catch(err) {
+                console.log(err);
+            }
+            await initializeSwarmEngine();
+            if (typeof constitutionBundles !== "undefined") {
+                try {
+                    await evalBundles(constitutionBundles, true);
+                } catch(err) {
+                    console.log(err);
+                }
+            }
 		};
 
 		__boot()
