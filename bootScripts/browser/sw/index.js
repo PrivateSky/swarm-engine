@@ -1,5 +1,6 @@
 const SWBootScript = require("./SWBootScript");
 const server = require("ssapp-middleware").getMiddleware();
+const MimeType = require("../util/MimeType");
 const ChannelsManager = require("../../../utils/SWChannelsManager").getChannelsManager();
 const UtilFunctions = require("../../../utils/utilFunctions");
 const RawDossierHelper = require("./RawDossierHelper");
@@ -301,7 +302,9 @@ function downloadHandler(req, res) {
         const filename = path.split('/').pop();
         const readableStream = convertToNativeReadableStream(stream);
 
+		let fileExt = filename.substring(filename.lastIndexOf(".") + 1);
         res.status(200);
+        res.set("Content-Type",MimeType.getMimeTypeFromExtension(fileExt).name);
         res.set("Content-Disposition", `attachment; filename="${filename}"`);
         res.send(readableStream);
     });
