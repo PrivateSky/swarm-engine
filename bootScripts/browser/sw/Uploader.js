@@ -202,7 +202,7 @@ Uploader.prototype.uploadFile = function (file, callback) {
 
     const writeFile = () => {
         const stream = new FileReadableStreamAdapter(file);
-        this.dossier.writeFile(destFile, stream, (err) => {
+        this.dossier.writeFile(destFile, stream, {ignoreMounts:false}, (err) => {
             callback(err, {
                 path: destFile
             });
