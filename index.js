@@ -23,4 +23,7 @@ if (browserContexts.indexOf($$.environmentType) !== -1) {
     module.exports.IframePowerCord = require("./powerCords/browser/IframePowerCord");
     module.exports.HostPowerCord = require("./powerCords/browser/HostPowerCord");
     module.exports.ServiceWorkerPC = require("./powerCords/browser/ServiceWorkerPC");
+
+    module.exports.OuterWebWorkerPowerCord = require("./powerCords/browser/OuterWebWorkerPowerCord");
+    module.exports.InnerWebWorkerPowerCord = require("./powerCords/browser/InnerWebWorkerPowerCord");
 }
