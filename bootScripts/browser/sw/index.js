@@ -295,7 +295,7 @@ function downloadHandler(req, res) {
 
             return res.sendError(500, err.message);
         } else if (err) {
-            return res.sendError(500, Object.ptototype.toString.call(err));
+            return res.sendError(500, Object.prototype.toString.call(err));
         }
 
         // Extract the filename
