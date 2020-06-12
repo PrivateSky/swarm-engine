@@ -20,10 +20,11 @@ module.exports = {
 const or = require("overwrite-require");
 const browserContexts = [or.constants.BROWSER_ENVIRONMENT_TYPE, or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE];
 if (browserContexts.indexOf($$.environmentType) !== -1) {
-    module.exports.IframePowerCord = require("./powerCords/browser/IframePowerCord");
+    module.exports.SSAppPowerCord = require("./powerCords/browser/SSAppPowerCord");
+    /*module.exports.IframePowerCord = require("./powerCords/browser/IframePowerCord");
     module.exports.HostPowerCord = require("./powerCords/browser/HostPowerCord");
     module.exports.ServiceWorkerPC = require("./powerCords/browser/ServiceWorkerPC");
 
     module.exports.OuterWebWorkerPowerCord = require("./powerCords/browser/OuterWebWorkerPowerCord");
-    module.exports.InnerWebWorkerPowerCord = require("./powerCords/browser/InnerWebWorkerPowerCord");
+    module.exports.InnerWebWorkerPowerCord = require("./powerCords/browser/InnerWebWorkerPowerCord");*/
 }
