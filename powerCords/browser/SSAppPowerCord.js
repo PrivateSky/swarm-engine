@@ -5,22 +5,30 @@
 function SSAppPowerCord(reference){
 
 	this.sendSwarm = function (swarmSerialization){
+		//console.log("Sending swarm using", reference);
 		reference.postMessage(swarmSerialization, "*");
 	};
 
 	let receivedMessageHandler  = (event)=>{
 		console.log("SSAppPowerCord caught event", event);
-		if(event.source !== reference){
+		/*if(event.source !== reference){
 			console.log("Not my message to handle");
 			return;
 		}
 		console.log("Message received from ssapp", event.source);
+		*/
 		let swarmSerialization = event.data;
 		this.transfer(swarmSerialization);
 	};
 
 	let setupConnection = () => {
-		window.addEventListener("message", receivedMessageHandler);
+		if(typeof window.powerCordHandler === "undefined"){
+			//console.log("SSAPP PC listener set up");
+			window.powerCordHandler = receivedMessageHandler;
+			window.addEventListener("message", window.powerCordHandler);
+		}else{
+			//console.log("SSAPP handler already set.");
+		}
 	};
 
 	return new Proxy(this, {
