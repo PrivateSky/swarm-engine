@@ -303,16 +303,30 @@ Uploader.prototype.upload = function (request, callback) {
         return _callback.bind(this);
     }
 
-    for (const file of files) {
+    const filesCopy = [...files];
+    
+    const recursiveUpload = () => {
+        const file = filesCopy.shift();
+
+        if (!file) {
+            return;
+        }
+
         try {
             this.validateFile(file);
         } catch (e) {
             uploadFileCallback(file, e);
-            continue;
+            recursiveUpload();
+            return;
         }
 
-        this.uploadFile(file, uploadFileCallback(file));
-    }
+        this.uploadFile(file, (err, result) => {
+            const callback = uploadFileCallback(file);
+            callback(err, result);
+            recursiveUpload();
+        });
+    };
+    recursiveUpload();
 }
 
 module.exports = Uploader;
