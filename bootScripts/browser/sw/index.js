@@ -12,7 +12,6 @@ let rawDossierHlp = null;
 let uploader = null;
 let seedResolver = null;
 
-
 function createChannelHandler (req, res) {
     ChannelsManager.createChannel(req.params.channelName, function (err) {
         if (err) {
@@ -78,7 +77,8 @@ self.addEventListener('activate', function (event) {
     console.log("Activating host service worker", event);
     event.waitUntil(clients.claim());
 });
-
+let id = Math.random();
+let bootInProgress = false;
 self.addEventListener('message', function (event) {
     if (!(event.target instanceof ServiceWorkerGlobalScope)) {
         return;
@@ -95,22 +95,24 @@ self.addEventListener('message', function (event) {
         // If a seed promise resolver exists
         // it means that the state is waiting to be initialized
         // in the fetch request event handler
-        if (seedResolver) {
-            // Resolve the seed request
-            seedResolver(data.seed);
+        if (!global.rawDossier && !bootInProgress) {
 
-            // Prevent multiple resolves in case
-            // multiple tabs are open
-            seedResolver = null;
-            return;
-        }
-
-        if (!global.rawDossier) {
+            bootInProgress = true;
             bootSWEnvironment(data.seed, (err) => {
                 if (err) {
                     throw err;
                 }
                 comPort.postMessage({status: 'finished'});
+                bootInProgress = false;
+                if (seedResolver) {
+                    // Resolve the seed request
+                    seedResolver(data.seed);
+
+                    // Prevent multiple resolves in case
+                    // multiple tabs are open
+                    seedResolver = null;
+                    return;
+                }
             })
         }
     }
@@ -135,15 +137,9 @@ function initState(event) {
     }
 
     return requestSeedFromClient().then((seed) => {
-        return new Promise((resolve, reject) => {
-            bootSWEnvironment(seed, (err) => {
-                if (err) {
-                    return reject(err);
-                }
-
-                resolve(event);
-            })
-        })
+        return new Promise((resolve, reject)=>{
+            resolve(event);
+        });
     });
 }
 
@@ -152,9 +148,9 @@ function initState(event) {
  * to all visible windows
  *
  * @return {Promise} The promise will be resolved
- *                   when a client will post back the
- *                   the requested seed in the
- *                   "on message" handler
+ * when a client will post back the
+ * the requested seed in the
+ * "on message" handler
  */
 function requestSeedFromClient() {
     return clients.matchAll({
@@ -165,7 +161,7 @@ function requestSeedFromClient() {
         // once the loader posts back our seed in the "on message" handler
         let requestSeedPromise = new Promise((resolve, reject) => {
             seedResolver = resolve;
-        })
+        });
 
         const identity = self.registration.scope.split('/').pop();
 
@@ -225,7 +221,7 @@ function uploadHandler (req, res) {
         return;
     }
     uploader.upload(req, function (err, uploadedFiles) {
-        if (err && (!Array.isArray(uploadedFiles) || !uploadedFiles.length))  {
+        if (err && (!Array.isArray(uploadedFiles) || !uploadedFiles.length)) {
             let statusCode = 400; // Validation errors
 
             if (err instanceof Error) {
@@ -302,7 +298,7 @@ function downloadHandler(req, res) {
         const filename = path.split('/').pop();
         const readableStream = convertToNativeReadableStream(stream);
 
-		let fileExt = filename.substring(filename.lastIndexOf(".") + 1);
+        let fileExt = filename.substring(filename.lastIndexOf(".") + 1);
         res.status(200);
         res.set("Content-Type",MimeType.getMimeTypeFromExtension(fileExt).name);
         res.set("Content-Disposition", `attachment; filename="${filename}"`);
