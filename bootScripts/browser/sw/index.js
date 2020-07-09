@@ -77,7 +77,7 @@ self.addEventListener('activate', function (event) {
     console.log("Activating host service worker", event);
     event.waitUntil(clients.claim());
 });
-let id = Math.random();
+
 let bootInProgress = false;
 self.addEventListener('message', function (event) {
     if (!(event.target instanceof ServiceWorkerGlobalScope)) {
@@ -86,10 +86,6 @@ self.addEventListener('message', function (event) {
 
     const data = event.data;
     const comPort = event.ports[0];
-
-    if (data.action === "activate") {
-        comPort.postMessage({status: 'empty'});
-    }
 
     if (data.seed) {
         // If a seed promise resolver exists
@@ -102,7 +98,11 @@ self.addEventListener('message', function (event) {
                 if (err) {
                     throw err;
                 }
-                comPort.postMessage({status: 'finished'});
+                //not all messages came through a MessageChannel and a response is expected
+                if (comPort) {
+                    comPort.postMessage({status: 'finished'});
+                }
+
                 bootInProgress = false;
                 if (seedResolver) {
                     // Resolve the seed request
