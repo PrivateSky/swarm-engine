@@ -259,6 +259,7 @@ function makePluggable(powerCord) {
             if(typeof powerCord.__identity === "undefined"){
                 powerCord.__identity = value;
             }
+            return true;
         }, get: () => {
             return powerCord.__identity;
         }

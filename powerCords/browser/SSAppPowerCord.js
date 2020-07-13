@@ -37,6 +37,7 @@ function SSAppPowerCord(reference){
 			if(p === 'identity') {
 				setupConnection();
 			}
+			return true;
 		}
 	});
 }
