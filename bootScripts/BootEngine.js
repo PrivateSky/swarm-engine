@@ -66,7 +66,9 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
             try {
                 await evalBundles(runtimeBundles);
             } catch(err) {
-                console.log(err);
+            	if(err.type !== "PSKIgnorableError"){
+					console.log(err);
+				}
             }
             await initializeSwarmEngine();
             if (typeof constitutionBundles !== "undefined") {
