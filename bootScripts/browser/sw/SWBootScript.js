@@ -1,13 +1,13 @@
-function SWBootScript(seed) {
+function SWBootScript(keySSI) {
 
     console.log("Booting host...");
-    const seeds = {};
-    let self = {seed};
+    const keySSIs = {};
+    let self = {keySSI};
 
      this.boot = function(callback){
         const BootEngine = require("../../BootEngine");
 
-        const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["webshims.js","pskruntime.js"],["domain.js"]);
+        const bootter = new BootEngine(getKeySSI, initializeSwarmEngine, ["webshims.js","pskruntime.js"],["domain.js"]);
         bootter.boot((err, archive)=>{
             if(err){
                 console.log(err);
@@ -25,14 +25,8 @@ function SWBootScript(seed) {
         })
     };
 
-    function getSeed(callback){
-        callback(undefined, seed);
-    }
-
-
-    function getEDFS(callback){
-        const EDFS = require("edfs");
-        EDFS.attachWithSeed(seed, callback);
+    function getKeySSI(callback){
+        callback(undefined, keySSI);
     }
 
     function initializeSwarmEngine(callback){
@@ -48,8 +42,8 @@ function SWBootScript(seed) {
     }
 
 
-    this.createPowerCord = function (identity, seed, iframe) {
-        seeds[identity] = seed;
+    this.createPowerCord = function (identity, keySSI, iframe) {
+        keySSIs[identity] = keySSI;
         const powerCord = new self.IframePC(iframe);
         $$.swarmEngine.plug(identity, powerCord);
     };

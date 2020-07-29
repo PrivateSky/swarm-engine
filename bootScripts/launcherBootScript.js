@@ -5,52 +5,45 @@ process.on("uncaughtException", (err) => {
     console.log('err', err);
 });
 
-let seed;
+let keySSI;
 if (process.argv.length >= 3) {
-    seed = process.argv[2];
+    keySSI = process.argv[2];
 }
-console.log(`Launcher is using ${seed} as SEED`);
+console.log(`Launcher is using ${keySSI} as keySSI`);
 
 function boot() {
     const BootEngine = require("./BootEngine");
 
-    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "pskWebServer.js", "edfsBar.js"], ["blockchain.js"]);
+    const bootter = new BootEngine(getKeySSI, initializeSwarmEngine, ["pskruntime.js", "pskWebServer.js", "edfsBar.js"], ["blockchain.js"]);
     $$.log("Launcher booting process started");
     bootter.boot(function (err, archive) {
         if (err) {
             console.log(err);
             return;
         }
-
-        self.edfs.bootRawDossier(self.seed, (err, csb) => {
+        const EDFS = require("edfs");
+        EDFS.resolveSSI(self.keySSI, "RawDossier", (err, rawDossier) => {
             if (err) {
                 throw err;
             }
 
-            launch(csb);
-        })
+            rawDossier.start((err) => {
+                if (err) {
+                    throw err;
+                }
+
+                launch(rawDossier);
+            })
+        });
     })
 }
 
-let self = {seed};
+let self = {keySSI};
 
-function getSeed(callback) {
+function getKeySSI(callback) {
     setTimeout(() => {
-        callback(undefined, self.seed);
+        callback(undefined, self.keySSI);
     }, 0);
-}
-
-
-function getEDFS(callback) {
-    let EDFS = require("edfs");
-    EDFS.attachWithSeed(self.seed, (err, edfsInst) => {
-        if (err) {
-            return callback(err);
-        }
-
-        self.edfs = edfsInst;
-        callback(undefined, self.edfs);
-    });
 }
 
 function initializeSwarmEngine(callback) {
@@ -71,7 +64,7 @@ function launch(csb) {
 
     const domains = {};
 
-    dossier.load(csb.getSeed(), "launcherIdentity", function (err, dossierHandler) {
+    dossier.load(csb.getKeySSI(), "launcherIdentity", function (err, dossierHandler) {
         if (err) {
             throw err;
         }
@@ -97,7 +90,7 @@ function launch(csb) {
             const child_env = JSON.parse(JSON.stringify(process.env));
 
             child_env.PRIVATESKY_TMP = process.env.PRIVATESKY_TMP;
-            child_env.PSK_DOMAIN_SEED = env.config.constitution;
+            child_env.PSK_DOMAIN_KEY_SSI = env.config.constitution;
 
             child_env.config = JSON.stringify({
                 workspace: env.config.workspace

@@ -1,14 +1,10 @@
-function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, constitutionBundles) {
+const RAW_DOSSIER_TYPE = "RawDossier";
+function BootEngine(getKeySSI, initializeSwarmEngine, runtimeBundles, constitutionBundles) {
 
-	if (typeof getSeed !== "function") {
+	if (typeof getKeySSI !== "function") {
 		throw new Error("getSeed missing or not a function");
 	}
-	getSeed = promisify(getSeed);
-
-	if (typeof getEDFS !== "function") {
-		throw new Error("getEDFS missing or not a function");
-	}
-	getEDFS = promisify(getEDFS);
+	getKeySSI = promisify(getKeySSI);
 
 	if (typeof initializeSwarmEngine !== "function") {
 		throw new Error("initializeSwarmEngine missing or not a function");
@@ -24,7 +20,6 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
 	}
 
 	const EDFS = require('edfs');
-	let edfs;
 	const pskPath = require("swarmutils").path;
 
 	const evalBundles = async (bundles, ignore) => {
@@ -53,12 +48,11 @@ function BootEngine(getSeed, getEDFS, initializeSwarmEngine, runtimeBundles, con
 
 	this.boot = function (callback) {
 		const __boot = async () => {
-            const seed = await getSeed();
-            edfs = await getEDFS();
+            const keySSI = await getKeySSI();
 
-            const loadRawDossier = promisify(edfs.loadRawDossier);
+            const loadRawDossier = promisify(EDFS.resolveSSI);
             try {
-                this.rawDossier = await loadRawDossier(seed);
+                this.rawDossier = await loadRawDossier(keySSI, RAW_DOSSIER_TYPE);
             } catch (err) {
                 console.log(err);
             }

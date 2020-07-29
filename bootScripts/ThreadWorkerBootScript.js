@@ -9,7 +9,7 @@ function boot() {
         }, 100);
     });
 
-    function getSeed(callback){
+    function getKeySSI(callback){
         let err;
         if (!workerData.hasOwnProperty('constitutionSeed') || typeof workerData.constitutionSeed !== "string") {
             err = new Error(`Missing or wrong type of constitutionSeed in worker data configuration: ${JSON.stringify(workerData)}`);
@@ -23,18 +23,7 @@ function boot() {
         return workerData.constitutionSeed;
     }
 
-    let edfs;
-    function getEDFS(callback){
-        const EDFS = require("edfs");
-        EDFS.attachWithSeed(getSeed(), (err, edfsInst) => {
-            if (err) {
-                return callback(err);
-            }
-
-            edfs = edfsInst;
-            callback(null, edfs);
-        });
-    }
+    const EDFS = require("edfs");
 
     function initializeSwarmEngine(callback){
         require('callflow').initialise();
@@ -49,17 +38,23 @@ function boot() {
             powerCord.transfer(packedSwarm);
         });
 
-        edfs.bootRawDossier(workerData.constitutionSeed, (err, csbhandler) =>{
-            if(err){
+        EDFS.resolveSSI(workerData.constitutionSeed, "RawDossier", (err, rawDossier) => {
+            if (err) {
                 $$.throwError(err);
             }
-            callback();
+
+            rawDossier.start((err) =>{
+                if(err){
+                    $$.throwError(err);
+                }
+                callback(undefined);
+            });
         });
     }
 
     const BootEngine = require("./BootEngine.js");
 
-    const booter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "blockchain.js"], ["domain.js"]);
+    const booter = new BootEngine(getKeySSI, initializeSwarmEngine, ["pskruntime.js", "blockchain.js"], ["domain.js"]);
 
     booter.boot((err) => {
         if(err){

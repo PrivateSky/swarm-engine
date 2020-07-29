@@ -2,9 +2,9 @@ const path = require('path');
 //enabling life line to parent process
 require(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, "psknode/core/utils/pingpongFork.js")).enableLifeLine();
 
-const seed = process.env.PSK_DOMAIN_SEED;
+const keySSI = process.env.PSK_DOMAIN_KEY_SSI;
 //preventing children to access the env parameter
-process.env.PSK_DOMAIN_SEED = undefined;
+process.env.PSK_DOMAIN_KEY_SSI = undefined;
 
 if (process.argv.length > 3) {
     process.env.PRIVATESKY_DOMAIN_NAME = process.argv[2];
@@ -28,7 +28,7 @@ if (typeof config.workspace !== "undefined" && config.workspace !== "undefined")
 function boot() {
     const BootEngine = require("./BootEngine");
 
-    const bootter = new BootEngine(getSeed, getEDFS, initializeSwarmEngine, ["pskruntime.js", "pskWebServer.js", "edfsBar.js"], ["blockchain.js"]);
+    const bootter = new BootEngine(getKeySSI, initializeSwarmEngine, ["pskruntime.js", "pskWebServer.js", "edfsBar.js"], ["blockchain.js"]);
     bootter.boot(function (err, archive) {
         if (err) {
             console.log(err);
@@ -42,27 +42,15 @@ function boot() {
     })
 }
 
-function getSeed(callback) {
-    callback(undefined, self.seed);
+function getKeySSI(callback) {
+    callback(undefined, self.keySSI);
 }
 
-let self = {seed};
-
-function getEDFS(callback) {
-    let EDFS = require("edfs");
-    EDFS.attachWithSeed(seed, (err, edfsInst) => {
-        if (err) {
-            return callback(err);
-        }
-
-        self.edfs = edfsInst;
-        callback(undefined, self.edfs);
-    });
-}
+let self = {keySSI};
 
 function initializeSwarmEngine(callback) {
     const EDFS = require("edfs");
-    self.edfs.loadBar(self.seed, (err, bar) => {
+    EDFS.resolveSSI(self.keySSI, "Bar", (err, bar) => {
         if (err) {
             return callback(err);
         }
@@ -85,7 +73,7 @@ function initializeSwarmEngine(callback) {
 
 function plugPowerCords() {
     const dossier = require("dossier");
-    dossier.load(self.seed, "DomainIdentity", function (err, dossierHandler) {
+    dossier.load(self.keySSI, "DomainIdentity", function (err, dossierHandler) {
         if (err) {
             throw err;
         }
@@ -121,7 +109,7 @@ function plugPowerCords() {
 
                 const EDFS = require("edfs");
                 const pskPath = require("swarmutils").path;
-                self.edfs.loadRawDossier(self.seed, (err, rawDossier) => {
+                EDFS.resolveSSI(self.keySSI, "RawDossier", (err, rawDossier) => {
                     if (err) {
                         throw err;
                     }
@@ -132,7 +120,7 @@ function plugPowerCords() {
                         }
 
                         agents.forEach(agent => {
-                            const agentPC = new se.OuterThreadPowerCord(fileContents.toString(), true, seed);
+                            const agentPC = new se.OuterThreadPowerCord(fileContents.toString(), true, keySSI);
                             $$.swarmEngine.plug(`${self.domainConf.alias}/agent/${agent.alias}`, agentPC);
                         });
 
