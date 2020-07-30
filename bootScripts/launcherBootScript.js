@@ -63,23 +63,28 @@ function launch(csb) {
     const beesHealer = require('swarmutils').beesHealer;
 
     const domains = {};
-
-    dossier.load(csb.getKeySSI(), "launcherIdentity", function (err, dossierHandler) {
+    csb.getKeySSI((err, keySSI) => {
         if (err) {
             throw err;
         }
-        dossierHandler.startTransaction("Domain", "getDomains").onReturn(function (err, domainsRefs) {
+
+        dossier.load(keySSI, "launcherIdentity", function (err, dossierHandler) {
             if (err) {
                 throw err;
             }
+            dossierHandler.startTransaction("Domain", "getDomains").onReturn(function (err, domainsRefs) {
+                if (err) {
+                    throw err;
+                }
 
-            domainsRefs.forEach(domainRef => {
-                launchDomain(domainRef.alias, domainRef);
+                domainsRefs.forEach(domainRef => {
+                    launchDomain(domainRef.alias, domainRef);
+                });
+
+                if (domains.length === 0) {
+                    console.log(`\n[::] No domains were deployed.\n`);
+                }
             });
-
-            if (domains.length === 0) {
-                console.log(`\n[::] No domains were deployed.\n`);
-            }
         });
     });
 
