@@ -207,6 +207,7 @@ function initMiddleware(){
     server.get("/receive-message/:channelName", receiveMessageHandler);
     server.post('/upload', uploadHandler);
     server.get('/download/*', downloadHandler);
+    server.delete('/delete/*', deleteHandler);
     server.get('/apps/*', rawDossierHlp.handleLoadApp());
     server.use("*","OPTIONS",UtilFunctions.handleOptionsRequest);
     server.get("*",rawDossierHlp.handleLoadApp("/"+CONSTANTS.APP_FOLDER, "/"+CONSTANTS.CODE_FOLDER));
@@ -248,8 +249,7 @@ function uploadHandler (req, res) {
 }
 
 function downloadHandler(req, res) {
-    let path = req.path.split('/').slice(2); // remove the "/download" part
-    path = path.filter(segment => segment.length > 0).map(segment => decodeURIComponent(segment));
+    let path = extractPath(req);
     if (!path.length) {
         return res.sendError(404, "File not found");
 
@@ -303,6 +303,29 @@ function downloadHandler(req, res) {
         res.set("Content-Type",MimeType.getMimeTypeFromExtension(fileExt).name);
         res.set("Content-Disposition", `attachment; filename="${filename}"`);
         res.send(readableStream);
+    });
+}
+
+function extractPath(req) {
+    let path = req.path.split('/').slice(2); // remove the "/delete" or "/download" part
+    path = path.filter(segment => segment.length > 0).map(segment => decodeURIComponent(segment));
+    return path;
+}
+
+function deleteHandler(req, res){
+    let path = extractPath(req);
+    if (!path.length) {
+        return res.sendError(404, "File not found");
+
+    }
+    path = '/' + path.join('/');
+
+    global.rawDossier.delete(path, (err)=>{
+        if(err){
+            return res.sendError(500, err.message);
+        }
+        res.status(200);
+        res.end();
     });
 }
 
