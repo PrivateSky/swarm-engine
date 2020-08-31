@@ -43,7 +43,6 @@ function RawDossierHelper(rawDossier){
                 respondWithFile(req, res, basePath).catch((err) => {
                         return respondWithFile(req, res, fallbackBasePath);
                     }).catch((err) => {
-                        console.log(err);
                         res.status(404);
                         res.end();
                     })
