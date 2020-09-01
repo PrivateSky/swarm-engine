@@ -1,7 +1,13 @@
-function HostBootScript(identity){
-    require('callflow').initialise();
+function HostBootScript(identity) {
+    if (typeof $$.flows === "undefined") {
+        require('callflow').initialise();
+    }
+
     const se = require("swarm-engine");
-    se.initialise(identity);
+    if (typeof $$.swarmEngine === "undefined") {
+        se.initialise(identity);
+    }
+
     const SRPC = se.SmartRemoteChannelPowerCord;
     let swUrl = "http://localhost:8080/";
     const powerCord = new SRPC([swUrl]);
@@ -9,5 +15,3 @@ function HostBootScript(identity){
 }
 
 module.exports = HostBootScript;
-
-
