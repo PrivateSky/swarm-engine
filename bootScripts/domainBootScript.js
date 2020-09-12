@@ -108,6 +108,7 @@ function plugPowerCords() {
                     agents.push({alias: 'system'});
                 }
 
+                const EDFS = require("edfs");
                 const resolver = require("opendsu").loadApi("resolver");
                 const pskPath = require("swarmutils").path;
                 resolver.loadDSU(self.keySSI, (err, rawDossier) => {
