@@ -28,7 +28,7 @@ if (typeof config.workspace !== "undefined" && config.workspace !== "undefined")
 function boot() {
     const BootEngine = require("./BootEngine");
 
-    const bootter = new BootEngine(getKeySSI, initializeSwarmEngine, ["pskruntime.js", "pskWebServer.js", "edfsBar.js"], ["blockchain.js"]);
+    const bootter = new BootEngine(getKeySSI, initializeSwarmEngine, ["pskruntime.js", "pskWebServer.js", "openDSU.js"], ["blockchain.js"]);
     bootter.boot(function (err, archive) {
         if (err) {
             console.log(err);
@@ -50,7 +50,8 @@ let self = {keySSI};
 
 function initializeSwarmEngine(callback) {
     const EDFS = require("edfs");
-    EDFS.resolveSSI(self.keySSI, "Bar", (err, bar) => {
+    const resolver = require("opendsu").loadApi("resolver");
+    resolver.loadDSU(self.keySSI, (err, bar) => {
         if (err) {
             return callback(err);
         }
@@ -107,9 +108,9 @@ function plugPowerCords() {
                     agents.push({alias: 'system'});
                 }
 
-                const EDFS = require("edfs");
+                const resolver = require("opendsu").loadApi("resolver");
                 const pskPath = require("swarmutils").path;
-                EDFS.resolveSSI(self.keySSI, "RawDossier", (err, rawDossier) => {
+                resolver.loadDSU(self.keySSI, (err, rawDossier) => {
                     if (err) {
                         throw err;
                     }

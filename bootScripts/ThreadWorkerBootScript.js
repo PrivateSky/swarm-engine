@@ -24,7 +24,7 @@ function boot() {
     }
 
     const EDFS = require("edfs");
-
+    const resolver = require("opendsu").loadApi("resolver");
     function initializeSwarmEngine(callback){
         require('callflow').initialise();
         const swarmEngine = require('swarm-engine');
@@ -38,7 +38,7 @@ function boot() {
             powerCord.transfer(packedSwarm);
         });
 
-        EDFS.resolveSSI(workerData.constitutionSeed, "RawDossier", (err, rawDossier) => {
+        resolver.loadDSU(workerData.constitutionSeed, (err, rawDossier) => {
             if (err) {
                 $$.throwError(err);
             }

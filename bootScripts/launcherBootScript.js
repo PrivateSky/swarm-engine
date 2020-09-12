@@ -14,15 +14,15 @@ console.log(`Launcher is using ${keySSI} as keySSI`);
 function boot() {
     const BootEngine = require("./BootEngine");
 
-    const bootter = new BootEngine(getKeySSI, initializeSwarmEngine, ["pskruntime.js", "pskWebServer.js", "edfsBar.js"], ["blockchain.js"]);
+    const bootter = new BootEngine(getKeySSI, initializeSwarmEngine, ["pskruntime.js", "pskWebServer.js", "openDSU.js"], ["blockchain.js"]);
     $$.log("Launcher booting process started");
     bootter.boot(function (err, archive) {
         if (err) {
             console.log(err);
             return;
         }
-        const EDFS = require("edfs");
-        EDFS.resolveSSI(self.keySSI, "RawDossier", (err, rawDossier) => {
+        const resolver = require("opendsu").loadApi("resolver");
+        resolver.loadDSU(self.keySSI, (err, rawDossier) => {
             if (err) {
                 throw err;
             }
