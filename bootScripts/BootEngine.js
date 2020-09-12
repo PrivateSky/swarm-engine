@@ -1,4 +1,3 @@
-const RAW_DOSSIER_TYPE = "RawDossier";
 function BootEngine(getKeySSI, initializeSwarmEngine, runtimeBundles, constitutionBundles) {
 
 	if (typeof getKeySSI !== "function") {
@@ -20,6 +19,7 @@ function BootEngine(getKeySSI, initializeSwarmEngine, runtimeBundles, constituti
 	}
 
 	const EDFS = require('edfs');
+	const resolver = require('opendsu').loadApi('resolver');
 	const pskPath = require("swarmutils").path;
 
 	const evalBundles = async (bundles, ignore) => {
@@ -49,10 +49,10 @@ function BootEngine(getKeySSI, initializeSwarmEngine, runtimeBundles, constituti
 	this.boot = function (callback) {
 		const __boot = async () => {
             const keySSI = await getKeySSI();
-
-            const loadRawDossier = promisify(EDFS.resolveSSI);
+			console.log("Booting ..................", keySSI);
+            const loadRawDossier = promisify(resolver.loadDSU);
             try {
-                this.rawDossier = await loadRawDossier(keySSI, RAW_DOSSIER_TYPE);
+                this.rawDossier = await loadRawDossier(keySSI);
             } catch (err) {
                 console.log(err);
             }
