@@ -5,8 +5,6 @@ const ChannelsManager = require("../../../utils/SWChannelsManager").getChannelsM
 const UtilFunctions = require("../../../utils/utilFunctions");
 const RawDossierHelper = require("./RawDossierHelper");
 const Uploader = require("./Uploader");
-const EDFS = require("edfs");
-const CONSTANTS = EDFS.constants.CSB;
 let bootScript = null;
 let rawDossierHlp = null;
 let uploader = null;
@@ -210,7 +208,7 @@ function initMiddleware(){
     server.delete('/delete/*', deleteHandler);
     server.get('/apps/*', rawDossierHlp.handleLoadApp());
     server.use("*","OPTIONS",UtilFunctions.handleOptionsRequest);
-    server.get("*",rawDossierHlp.handleLoadApp("/"+CONSTANTS.APP_FOLDER, "/"+CONSTANTS.CODE_FOLDER));
+    server.get("*",rawDossierHlp.handleLoadApp("/app", "/code"));
 }
 
 

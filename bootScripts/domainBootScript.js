@@ -49,14 +49,14 @@ function getKeySSI(callback) {
 let self = {keySSI};
 
 function initializeSwarmEngine(callback) {
-    const EDFS = require("edfs");
-    const resolver = require("opendsu").loadApi("resolver");
+    const openDSU = require("opendsu");
+    const resolver = openDSU.loadApi("resolver");
     resolver.loadDSU(self.keySSI, (err, bar) => {
         if (err) {
             return callback(err);
         }
 
-        bar.readFile(EDFS.constants.CSB.DOMAIN_IDENTITY_FILE, (err, content) => {
+        bar.readFile(openDSU.constants.DOMAIN_IDENTITY_FILE, (err, content) => {
             if (err) {
                 return callback(err);
             }
@@ -108,15 +108,15 @@ function plugPowerCords() {
                     agents.push({alias: 'system'});
                 }
 
-                const EDFS = require("edfs");
-                const resolver = require("opendsu").loadApi("resolver");
+                const openDSU = require("opendsu");
+                const resolver = openDSU.loadApi("resolver");
                 const pskPath = require("swarmutils").path;
                 resolver.loadDSU(self.keySSI, (err, rawDossier) => {
                     if (err) {
                         throw err;
                     }
 
-                    rawDossier.readFile(pskPath.join("/", EDFS.constants.CSB.CODE_FOLDER, EDFS.constants.CSB.CONSTITUTION_FOLDER , "threadBoot.js"), (err, fileContents) => {
+                    rawDossier.readFile(pskPath.join(openDSU.constants.CONSTITUTION_FOLDER , "threadBoot.js"), (err, fileContents) => {
                         if (err) {
                             throw err;
                         }

@@ -23,8 +23,8 @@ function boot() {
         return workerData.constitutionSeed;
     }
 
-    const EDFS = require("edfs");
-    const resolver = require("opendsu").loadApi("resolver");
+    const openDSU = require("opendsu");
+    const resolver = openDSU.loadApi("resolver");
     function initializeSwarmEngine(callback){
         require('callflow').initialise();
         const swarmEngine = require('swarm-engine');
