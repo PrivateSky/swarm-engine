@@ -49,7 +49,6 @@ function BootEngine(getKeySSI, initializeSwarmEngine, runtimeBundles, constituti
 	this.boot = function (callback) {
 		const __boot = async () => {
             const keySSI = await getKeySSI();
-			console.log("Booting ..................", keySSI);
             const loadRawDossier = promisify(resolver.loadDSU);
             try {
                 this.rawDossier = await loadRawDossier(keySSI);
