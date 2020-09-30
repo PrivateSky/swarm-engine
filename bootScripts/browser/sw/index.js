@@ -185,6 +185,7 @@ function requestSeedFromClient() {
  */
 function bootSWEnvironment(seed, callback) {
     bootScript = new SWBootScript(seed);
+    global.server = server;
     bootScript.boot((err, _rawDossier) => {
         if(err){
             return callback(err);
