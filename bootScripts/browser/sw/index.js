@@ -202,24 +202,10 @@ function apiHandler(req, res){
     const fncName = req.query.name;
     const args = req.query.arguments;
 
-    global.rawDossier.readFile("/code/api.js", function(err, apiCode){
-        if(err){
-            res.statusCode = 500;
-            return res.end();
-        }
-
-        try{
-            apiCode = new TextDecoder("utf-8").decode(apiCode);
-            const apis = eval(apiCode);
-            apis[fncName].call(this, ...args, (...result)=>{
-                res.statusCode = 200;
-                res.send(JSON.stringify(result));
-                return res.end();
-            });
-        }catch(err){
-            res.statusCode = 500;
-            return res.end();
-        }
+    global.rawDossier.call(fncName, ...args, (...result)=>{
+        res.statusCode = 200;
+        res.send(JSON.stringify(result));
+        return res.end();
     });
 }
 
