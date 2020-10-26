@@ -198,18 +198,47 @@ function bootSWEnvironment(seed, callback) {
     });
 }
 
+function apiHandler(req, res){
+    const fncName = req.query.name;
+    const args = req.query.arguments;
+
+    global.rawDossier.readFile("/code/api.js", function(err, apiCode){
+        if(err){
+            res.statusCode = 500;
+            return res.end();
+        }
+
+        try{
+            apiCode = new TextDecoder("utf-8").decode(apiCode);
+            const apis = eval(apiCode);
+            apis[fncName].call(this, ...args, (...result)=>{
+                res.statusCode = 200;
+                res.send(JSON.stringify(result));
+                return res.end();
+            });
+        }catch(err){
+            res.statusCode = 500;
+            return res.end();
+        }
+    });
+}
 
 function initMiddleware(){
+    server.get("/api", apiHandler);
+
     server.put("/create-channel/:channelName", createChannelHandler);
     server.post("/forward-zeromq/:channelName", forwardMessageHandler);
     server.post("/send-message/:channelName", sendMessageHandler);
     server.get("/receive-message/:channelName", receiveMessageHandler);
+
     server.post('/upload', uploadHandler);
     server.get('/download/*', downloadHandler);
+
     server.delete('/delete/*', deleteHandler);
     server.get('/apps/*', rawDossierHlp.handleLoadApp());
     server.use("*","OPTIONS",UtilFunctions.handleOptionsRequest);
     server.get("*",rawDossierHlp.handleLoadApp("/app", "/code"));
+
 }
 
 
