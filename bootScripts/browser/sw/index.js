@@ -200,7 +200,10 @@ function bootSWEnvironment(seed, callback) {
 
 function apiHandler(req, res){
     const fncName = req.query.name;
-    const args = req.query.arguments;
+    let args = req.query.arguments;
+    if(typeof args === "string"){
+        args = args.split(",");
+    }
 
     global.rawDossier.call(fncName, ...args, (...result)=>{
         res.statusCode = 200;
