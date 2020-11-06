@@ -9,7 +9,13 @@ function HostBootScript(identity) {
     }
 
     const SRPC = se.SmartRemoteChannelPowerCord;
-    let swUrl = "http://localhost:8080/";
+    let location = window.location;
+    let port = "";
+    if(location.port !== "" && location.host.indexOf(":")===-1){
+        port = `:${location.port}`;
+    }
+    let swUrl = `${location.protocol}//${location.host}${port}/`;
+
     const powerCord = new SRPC([swUrl]);
     $$.swarmEngine.plug("test/agent/007", powerCord);
 }
