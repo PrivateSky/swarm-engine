@@ -76,6 +76,11 @@ self.addEventListener('activate', function (event) {
     event.waitUntil(clients.claim());
 });
 
+self.addEventListener('install', function(event) {
+    // The promise that skipWaiting() returns can be safely ignored.
+    self.skipWaiting();
+});
+
 let bootInProgress = false;
 self.addEventListener('message', function (event) {
     if (!(event.target instanceof ServiceWorkerGlobalScope)) {
