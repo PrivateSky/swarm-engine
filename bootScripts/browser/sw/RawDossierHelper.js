@@ -1,17 +1,61 @@
 const MimeType = require("../util/MimeType");
+const securityPolicies = "/app/security.policies";
+const cache = require("opendsu").loadApi("cache").getCache("middlewareCache");
 
-function RawDossierHelper(rawDossier){
+function RawDossierHelper(rawDossier) {
+    let policies = {};
 
+    rawDossier.readFile(securityPolicies, (err, _policies) => {
+        if (!err) {
+            policies = JSON.parse(_policies);
+        }
+    })
 
-  function getAppFile(appFile) {
+    function isCacheable(filePath) {
+        const cacheableFolders = policies.cacheableFolders;
+        if (typeof cacheableFolders === "undefined") {
+            return false;
+        }
+
+        for (let i = 0; i < cacheableFolders.length; i++) {
+            if (filePath.startsWith(cacheableFolders[i])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function getAppFile(appFile) {
         return new Promise((resolve, reject) => {
-            rawDossier.readFile(appFile, (err, content) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(content);
-                }
-            });
+            if (isCacheable(appFile)) {
+                cache.get(appFile, (err, data) => {
+                    if (err || typeof data === "undefined") {
+                        __readAppFile();
+                    }else{
+                        data.toString = function (){
+                            const textDecoder = new TextDecoder();
+                            return textDecoder.decode(data);
+                        }
+                        resolve(data);
+                    }
+                });
+            } else {
+                __readAppFile();
+            }
+
+            function __readAppFile() {
+                rawDossier.readFile(appFile, (err, content) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        if (isCacheable(appFile)) {
+                            cache.put(appFile, content);
+                        }
+                        resolve(content);
+                    }
+                });
+            }
         });
     }
 
@@ -41,11 +85,11 @@ function RawDossierHelper(rawDossier){
         return function (req, res, next) {
             if (rawDossier) {
                 respondWithFile(req, res, basePath).catch((err) => {
-                        return respondWithFile(req, res, fallbackBasePath);
-                    }).catch((err) => {
-                        res.status(404);
-                        res.end();
-                    })
+                    return respondWithFile(req, res, fallbackBasePath);
+                }).catch((err) => {
+                    res.status(404);
+                    res.end();
+                })
                 return;
             }
 
