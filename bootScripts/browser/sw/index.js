@@ -122,6 +122,14 @@ self.addEventListener('message', function (event) {
 });
 
 self.addEventListener('fetch', (event) => {
+    const requestedUrl = new URL(event.request.url);
+
+    const isExternalRequest = requestedUrl.hostname !== self.location.hostname;
+    const mustAllowRequest = event.request.headers && event.request.headers["x-blockchain-domain-request"] != null;
+    if(isExternalRequest || mustAllowRequest) {
+      return;
+    }
+    
     event.respondWith(initState(event).then(server.handleEvent));
 });
 
