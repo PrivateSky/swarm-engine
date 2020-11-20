@@ -125,7 +125,7 @@ self.addEventListener('fetch', (event) => {
     const requestedUrl = new URL(event.request.url);
 
     const isExternalRequest = requestedUrl.hostname !== self.location.hostname;
-    const mustAllowRequest = event.request.headers && event.request.headers["x-blockchain-domain-request"] != null;
+    const mustAllowRequest = event.request.url.includes("x-blockchain-domain-request");
     if(isExternalRequest || mustAllowRequest) {
       return;
     }
