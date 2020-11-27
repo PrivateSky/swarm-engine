@@ -42,7 +42,11 @@ function BootEngine(getKeySSI, initializeSwarmEngine, runtimeBundles, constituti
 
 		for (let i = 0; i < fileList.length; i++) {
 			var fileContent = await readFile(fileList[i]);
-			eval(fileContent.toString());
+			try {
+				eval(fileContent.toString());
+			}catch(e){
+				console.log("Failed to eval file", fileList[i], e);
+			}
 		}
 	};
 
