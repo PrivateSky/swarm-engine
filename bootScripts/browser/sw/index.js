@@ -199,12 +199,32 @@ function requestSeedFromClient() {
 function bootSWEnvironment(seed, callback) {
     bootScript = new SWBootScript(seed);
     global.server = server;
+    let openDsu = require("opendsu");
+    let config = openDsu.loadApi("config");
+
+    let mainSSI = openDsu.loadApi("keyssi").parse(seed);
+    if(mainSSI.getHint() == "server"){
+        config.disableLocalVault();
+    }
+
     bootScript.boot((err, _rawDossier) => {
         if(err){
             return callback(err);
         }
 
         global.rawDossier = _rawDossier;
+
+        openDsu.loadAPI("sc").getMainDSU().readFile("/environment.json", (err, envContent) => {
+                    if(err){
+                        console.trace("Failed reading enviroment.json", err);
+                    }
+                    try{
+                        let environment = JSON.parse(envContent.toString());
+                        config.autoconfigFromEnvironment(environment);
+                    } catch(err){
+                        console.trace("Failed evaling enviroment.js", err);
+                    }
+                })
         rawDossierHlp = new RawDossierHelper(global.rawDossier);
         initMiddleware();
         callback();
