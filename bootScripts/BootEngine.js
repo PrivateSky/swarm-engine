@@ -56,6 +56,7 @@ function BootEngine(getKeySSI, initializeSwarmEngine, runtimeBundles, constituti
             const loadRawDossier = promisify(resolver.loadDSU);
             try {
                 this.rawDossier = await loadRawDossier(keySSI);
+				global.rawDossier = this.rawDossier;
             } catch (err) {
                 console.log(err);
             }
