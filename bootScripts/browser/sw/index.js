@@ -229,8 +229,47 @@ function apiHandler(req, res){
     });
 }
 
+function apiStandardHandler(req, res, next){
+    const { params : { method }, query} = req;
+
+    switch(method) {
+        case "app-seed": {
+            const { path, name } = query;
+            rawDossierHlp.getAppSeed(path, name, (err, seed) => {
+                if(err) {
+                    console.error(err);
+                    res.statusCode = 500;
+                    return res.end();
+                }
+                
+                res.statusCode = 200;
+                res.send(seed);
+                return res.end();
+            })
+            return;
+        }
+        case "user-details": {
+            rawDossierHlp.getUserDetails((err, userDetails) => {
+                if(err) {
+                    console.error(err);
+                    res.statusCode = 500;
+                    return res.end();
+                }
+                
+                res.statusCode = 200;
+                res.send(JSON.stringify(userDetails));
+                return res.end();
+            })
+            return;
+        }
+    }
+
+    next();
+}
+
 function initMiddleware(){
     server.get("/api", apiHandler);
+    server.get("/api-standard/:method", apiStandardHandler);
 
     server.put("/create-channel/:channelName", createChannelHandler);
     server.post("/forward-zeromq/:channelName", forwardMessageHandler);

@@ -2,6 +2,8 @@ const MimeType = require("../util/MimeType");
 const securityPolicies = "/app/security.policies";
 const cache = require("opendsu").loadApi("cache").getCache("middlewareCache", 1000*60*60);
 
+const USER_DETAILS = "user-details.json";
+
 function RawDossierHelper(rawDossier) {
     let policies = {};
 
@@ -77,6 +79,10 @@ function RawDossierHelper(rawDossier) {
                 res.set(headers);
                 res.status(200);
                 let content = mimeType.binary ? data : data.toString();
+                if (["htm", "html", "xhtml"].includes(fileExtension)) {
+                    const baseUrl = `/`;
+                    content = content.replace("PLACEHOLDER_THAT_WILL_BE_REPLACED_BY_SW_OR_SERVER_WITH_BASE_TAG", `<base href="${baseUrl}">`);
+                }
                 res.send(content);
                 res.end();
             })
@@ -97,6 +103,39 @@ function RawDossierHelper(rawDossier) {
             res.status(503);
             res.end();
         }
+    }
+
+    this.getAppSeed = function(path, appName, callback) {
+        if(!rawDossier) {
+           return callback(new Error("Raw Dossier is not available."));
+        }
+
+        rawDossier.listMountedDossiers(path, (err, result) => {
+            if (err) {
+                return callback(err);
+            }
+
+            let selectedDsu = result.find((dsu) => dsu.path === appName);
+            if (!selectedDsu) {
+                return callback(new Error(`Dossier with the name ${appName} was not found in the mounted points!`));
+            }
+
+            callback(undefined, selectedDsu.identifier);
+        });
+    }
+
+    this.getUserDetails = function(callback) {
+        if(!rawDossier) {
+            return callback(new Error("Raw Dossier is not available."));
+        }
+
+        rawDossier.readFile(USER_DETAILS, (err, fileContent) => {
+            if(err) {
+                return callback(err);
+            }
+            const dataSerialization = fileContent.toString();
+            return callback(undefined, JSON.parse(dataSerialization));
+        });
     }
 }
 
