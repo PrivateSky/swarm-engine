@@ -60,7 +60,7 @@ function SmartRemoteChannelPowerCord(communicationAddrs, receivingChannelName, z
                     return;
                 }
 
-                if(Buffer && Buffer.isBuffer(swarmSerialization)){
+                if($$.Buffer && $$.Buffer.isBuffer(swarmSerialization)){
                     swarmSerialization = toArrayBuffer(swarmSerialization);
                 }
 

@@ -56,7 +56,7 @@ function receiveMessageHandler (req, res) {
         if (err) {
             res.status(err.code || 500);
         } else {
-            if (Buffer.isBuffer(message)) {
+            if ($$.Buffer.isBuffer(message)) {
                 res.setHeader('content-type', 'application/octet-stream');
             }
 

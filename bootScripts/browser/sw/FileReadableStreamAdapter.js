@@ -1,6 +1,5 @@
 const { Readable } = require('stream');
 const util = require('util');
-const Buffer = require('buffer').Buffer;
 
 /**
  * Stream.Readable adapter for File ReadableStream
@@ -30,7 +29,7 @@ FileReadableStreamAdapter.prototype._read = function (size) {
             return;
         }
 
-        if (this.push(Buffer.from(data))) {
+        if (this.push($$.Buffer.from(data))) {
             return this.fileStreamReader.read().then(pushData);
         }
     }
