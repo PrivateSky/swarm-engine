@@ -1,4 +1,3 @@
-let Queue = require("swarmutils").Queue;
 const maxQueueSize = 100;
 const TOKEN_PLACEHOLDER = "WEB_TOKEN_PLACEHOLDER";
 const queues = {};
@@ -14,6 +13,8 @@ function _getSubscribersList(channelName) {
 }
 
 function _getQueue(name) {
+    let Queue = require("swarmutils").Queue;
+
     if (typeof queues[name] === "undefined") {
         queues[name] = new Queue();
     }
@@ -46,6 +47,8 @@ function _deliverMessage(subscribers, message) {
 }
 
 function createChannel(channelName, callback) {
+    let Queue = require("swarmutils").Queue;
+
     if (typeof queues[channelName] !== "undefined") {
         let e = new Error("Channel exists!");
         e.code = 409;
