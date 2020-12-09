@@ -71,14 +71,7 @@ function boot() {
 
     let { seed, authorizationKey } = workerData;
 
-    resolver.loadDSU(seed, (err, dsu) => {
-        if (err) {
-            console.log(`Error loading DSU`, err);
-            return sendErrorAndExit(err);
-        }
-
-        rawDossier = dsu;
-
+    const startHttpServer = (dsu) => {
         var httpServer = http.createServer(function (req, res) {
             const { method, url } = req;
 
@@ -230,7 +223,22 @@ function boot() {
             const serverPort = httpServer.address().port;
             parentPort.postMessage({ port: serverPort, status: "started" });
         });
-    });
+    };
+
+    try {
+        resolver.loadDSU(seed, (err, dsu) => {
+            if (err) {
+                console.log(`Error loading DSU`, err);
+                return sendErrorAndExit(err);
+            }
+
+            rawDossier = dsu;
+            startHttpServer(dsu);
+        });
+    } catch (error) {
+        parentPort.postMessage({ error, status: "failed" });
+        process.exit(-1);
+    }
 }
 
 boot();
