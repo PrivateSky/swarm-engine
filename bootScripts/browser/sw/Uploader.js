@@ -219,6 +219,11 @@ Uploader.prototype.uploadFile = function (file, callback) {
         const reader = new FileReader();
         reader.onload = function(e) {
             fileAsStreamOrBuffer = e.target.result;
+            let sep = ";base64,";
+            if(fileAsStreamOrBuffer.indexOf(";base64,") !== -1){
+		fileAsStreamOrBuffer = fileAsStreamOrBuffer.split(sep)[1];
+		fileAsStreamOrBuffer = atob(fileAsStreamOrBuffer);
+            }
             return doWriting();
         }
         reader.onerror = function(e){
