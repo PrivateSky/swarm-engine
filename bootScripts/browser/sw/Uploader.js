@@ -201,12 +201,35 @@ Uploader.prototype.uploadFile = function (file, callback) {
     }
 
     const writeFile = () => {
-        const stream = new FileReadableStreamAdapter(file);
-        this.dossier.writeFile(destFile, stream, {ignoreMounts:false}, (err) => {
-            callback(err, {
-                path: destFile
+
+        const doWriting = ()=>{
+            this.dossier.writeFile(destFile, fileAsStreamOrBuffer, {ignoreMounts:false}, (err) => {
+                callback(err, {
+                    path: destFile
+                });
             });
-        })
+        }
+
+        let fileAsStreamOrBuffer;
+        if(typeof file.stream === "function"){
+            fileAsStreamOrBuffer = new FileReadableStreamAdapter(file);
+            return doWriting();
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            fileAsStreamOrBuffer = e.target.result;
+            return doWriting();
+        }
+        reader.onerror = function(e){
+            reader.abort();
+        }
+        reader.onabort = function(e){
+            return callback(reader.error);
+        }
+        reader.readAsDataURL(file);
+
+
     }
 
     if (this.preventOverwrite) {
