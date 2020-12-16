@@ -65,7 +65,7 @@ function boot() {
                 return downloadHandler.handle(dsu, res, requestedPath);
             }
 
-            fileRequestHandler.handle(dsu, res, seed, requestedPath);
+            fileRequestHandler.handle(dsu, req, res, seed, requestedPath);
         });
 
         httpServer.listen(0, function () {

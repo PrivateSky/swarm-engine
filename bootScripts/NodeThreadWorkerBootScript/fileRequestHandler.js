@@ -1,4 +1,8 @@
-const handle = (dsu, res, seed, requestedPath) => {
+const MimeType = require("../browser/util/MimeType");
+
+const handle = (dsu, req, res, seed, requestedPath) => {
+    const { url } = req;
+
     console.log(`Handling file: ${requestedPath}`);
     let file = requestedPath.split("?")[0]; // remove query params since this is a file request
     if (!file || file === "/" || file.indexOf(".") === -1) {

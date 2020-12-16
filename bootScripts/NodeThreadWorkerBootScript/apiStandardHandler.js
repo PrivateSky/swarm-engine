@@ -1,3 +1,5 @@
+const querystring = require("querystring");
+
 const USER_DETAILS = "user-details.json";
 
 const getAppSeed = function (dsu, path, appName, res) {
