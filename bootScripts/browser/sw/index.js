@@ -4,7 +4,7 @@ const MimeType = require("../util/MimeType");
 const ChannelsManager = require("../../../utils/SWChannelsManager").getChannelsManager();
 const UtilFunctions = require("../../../utils/utilFunctions");
 const RawDossierHelper = require("./RawDossierHelper");
-const Uploader = require("./Uploader");
+const Uploader = require("../../Uploader");
 let bootScript = null;
 let rawDossierHlp = null;
 let uploader = null;
@@ -309,7 +309,7 @@ function initMiddleware(){
 
 function uploadHandler (req, res) {
     try {
-        configureUploader(req.query);
+        uploader = Uploader.configureUploader(req.query, global.rawDossier, uploader);
     } catch (e) {
         res.sendError(500, JSON.stringify(e.message), 'application/json');
         return;
@@ -420,43 +420,4 @@ function deleteHandler(req, res){
         res.status(200);
         res.end();
     });
-}
-
-function configureUploader(config) {
-    config = config || {};
-
-    if (!config.path) {
-        throw new Error('Upload path is required. Ex: "POST /upload?path=/path/to/upload/folder"');
-    }
-
-    if (!config.input && !config.filename) {
-        throw new Error('"input" query parameter is required when doing multipart/form-data uploads or "filename" query parameter for request body uploads. Ex: POST /upload?input=files[] or POST /upload?filename=my-file.big');
-    }
-
-    let uploadPath = config.path;
-    if (uploadPath.substr(-1) !== '/') {
-        uploadPath += '/';
-    }
-
-    let allowedTypes;
-    if (typeof config.allowedTypes === 'string' && config.allowedTypes.length) {
-        allowedTypes = config.allowedTypes.split(',').filter(type => type.length > 0);
-    } else {
-        allowedTypes = [];
-    }
-    const options = {
-        inputName: config.input,
-        filename: config.filename,
-        maxSize: config.maxSize,
-        allowedMimeTypes: allowedTypes,
-        dossier: global.rawDossier,
-        uploadPath: uploadPath,
-        preventOverwrite: config.preventOverwrite
-    };
-
-    if (!uploader) {
-        uploader = new Uploader(options);
-    } else {
-        uploader.configure(options);
-    }
 }

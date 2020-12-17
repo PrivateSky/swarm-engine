@@ -1,44 +1,6 @@
 const querystring = require("querystring");
 
-const Uploader = require("./NodeUploader");
-
-function configureUploader(dsu, config) {
-    config = config || {};
-
-    if (!config.path) {
-        throw new Error('Upload path is required. Ex: "POST /upload?path=/path/to/upload/folder"');
-    }
-
-    if (!config.input && !config.filename) {
-        throw new Error(
-            '"input" query parameter is required when doing multipart/form-data uploads or "filename" query parameter for request body uploads. Ex: POST /upload?input=files[] or POST /upload?filename=my-file.big'
-        );
-    }
-
-    let uploadPath = config.path;
-    if (uploadPath.substr(-1) !== "/") {
-        uploadPath += "/";
-    }
-
-    let allowedTypes;
-    if (typeof config.allowedTypes === "string" && config.allowedTypes.length) {
-        allowedTypes = config.allowedTypes.split(",").filter((type) => type.length > 0);
-    } else {
-        allowedTypes = [];
-    }
-    const options = {
-        inputName: config.input,
-        filename: config.filename,
-        maxSize: config.maxSize,
-        allowedMimeTypes: allowedTypes,
-        dossier: dsu,
-        uploadPath: uploadPath,
-        preventOverwrite: config.preventOverwrite,
-    };
-
-    const uploader = new Uploader(options);
-    return uploader;
-}
+const Uploader = require("../Uploader");
 
 const handle = (dsu, req, res, requestedPath) => {
     let uploader;
@@ -46,7 +8,7 @@ const handle = (dsu, req, res, requestedPath) => {
         const query = requestedPath.substr(requestedPath.indexOf("?") + 1);
         const queryParams = querystring.parse(query);
         console.log({ queryParams });
-        uploader = configureUploader(dsu, queryParams);
+        uploader = Uploader.configureUploader(queryParams, dsu);
     } catch (e) {
         res.setHeader("Content-Type", "application/json");
         res.statusCode = 500;
@@ -63,11 +25,9 @@ const handle = (dsu, req, res, requestedPath) => {
 
     req.on("end", () => {
         try {
-            data = $$.Buffer.concat(data);
-
-            console.log("data", data.toString());
-            // console.log('req.body', $$.Buffer.from(data).toString());
-            uploader.upload(req, data, function (err, uploadedFiles) {
+            req.body = $$.Buffer.concat(data);
+            console.log("req.body", req.body.toString())
+            uploader.upload(req, function (err, uploadedFiles) {
                 if (err && (!Array.isArray(uploadedFiles) || !uploadedFiles.length)) {
                     console.log(err);
                     let statusCode = 400; // Validation errors
