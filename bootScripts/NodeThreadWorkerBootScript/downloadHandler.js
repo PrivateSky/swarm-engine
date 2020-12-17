@@ -1,3 +1,5 @@
+const MimeType = require("../browser/util/MimeType");
+
 const handle = (dsu, res, requestedPath) => {
     function extractPath() {
         let path = requestedPath.split("/").slice(2); // remove the "/delete" or "/download" part
