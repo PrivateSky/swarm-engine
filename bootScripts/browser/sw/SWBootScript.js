@@ -11,8 +11,7 @@ function SWBootScript(keySSI) {
         bootter.boot((err, archive)=>{
             if(err){
                 console.log(err);
-                callback(err);
-                return;
+                return callback(createOpenDSUErrorWrapper(`Failed to boot host`, err));
             }
             // in fiecare csbReference vom gasi un obiect care va contine:
             // - un seed pentru csb-ul referentiat(ssapp)

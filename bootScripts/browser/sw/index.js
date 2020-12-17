@@ -209,7 +209,7 @@ function bootSWEnvironment(seed, callback) {
 
     bootScript.boot((err, _rawDossier) => {
         if(err){
-            return callback(err);
+            return callback(createOpenDSUErrorWrapper(`Failed to boot SW environment>`, err));
         }
 
         global.rawDossier = _rawDossier;
