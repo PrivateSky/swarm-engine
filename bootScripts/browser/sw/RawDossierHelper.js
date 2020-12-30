@@ -112,7 +112,7 @@ function RawDossierHelper(rawDossier) {
 
         rawDossier.listMountedDossiers(path, (err, result) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to get the list of DSUs mounted at path <${path}>`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to get the list of DSUs mounted at path <${path}>`, err));
             }
 
             let selectedDsu = result.find((dsu) => dsu.path === appName);
@@ -131,7 +131,7 @@ function RawDossierHelper(rawDossier) {
 
         rawDossier.readFile(USER_DETAILS, (err, fileContent) => {
             if(err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to read file <${USER_DETAILS}>`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to read file <${USER_DETAILS}>`, err));
             }
             const dataSerialization = fileContent.toString();
             return callback(undefined, JSON.parse(dataSerialization));

@@ -53,12 +53,12 @@ function initializeSwarmEngine(callback) {
     const resolver = openDSU.loadApi("resolver");
     resolver.loadDSU(self.keySSI, (err, bar) => {
         if (err) {
-            return callback(createOpenDSUErrorWrapper(`Failed to load DSU with keySSI <${self.keySSI}>`, err));
+            return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to load DSU with keySSI <${self.keySSI}>`, err));
         }
 
         bar.readFile(openDSU.constants.DOMAIN_IDENTITY_FILE, (err, content) => {
             if (err) {
-                return callback(createOpenDSUErrorWrapper(`Failed to read file <${openDSU.constants.DOMAIN_IDENTITY_FILE}>`, err));
+                return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to read file <${openDSU.constants.DOMAIN_IDENTITY_FILE}>`, err));
             }
             self.domainName = content.toString();
             $$.log(`Domain ${self.domainName} is booting...`);
