@@ -121,11 +121,21 @@ self.addEventListener('message', function (event) {
     }
 });
 
+function allowedRequests(url){
+    let servedByApiHub = ["/bricking/","/anchor/","/bdns", "x-blockchain-domain-request"];
+    for(let i=0; i<servedByApiHub.length; i++){
+        if(url.includes(servedByApiHub[i])){
+            return true;
+        }
+    }
+    return false;
+}
+
 self.addEventListener('fetch', (event) => {
     const requestedUrl = new URL(event.request.url);
 
     const isExternalRequest = requestedUrl.hostname !== self.location.hostname;
-    const mustAllowRequest = event.request.url.includes("x-blockchain-domain-request");
+    const mustAllowRequest = allowedRequests(event.request.url);
     if(isExternalRequest || mustAllowRequest) {
       return;
     }
@@ -287,6 +297,14 @@ function apiStandardHandler(req, res, next){
     next();
 }
 
+function defaultHandling(req,res, next){
+    console.log("Rejecting request", req.originalUrl);
+    res.status(403);
+    res.write("Rejected by the service worker middleware");
+    res.end();
+}
+
+
 function initMiddleware(){
     server.get("/api", apiHandler);
     server.get("/api-standard/:method", apiStandardHandler);
@@ -304,8 +322,10 @@ function initMiddleware(){
     server.use("*","OPTIONS",UtilFunctions.handleOptionsRequest);
     server.get("*",rawDossierHlp.handleLoadApp("/app", "/code"));
 
+    server.put("*",defaultHandling);
+    server.post("*",defaultHandling);
+    server.delete("*",defaultHandling);
 }
-
 
 function uploadHandler (req, res) {
     try {
