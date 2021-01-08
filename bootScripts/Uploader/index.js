@@ -76,13 +76,15 @@ Uploader.configureUploader = function (config, dossier, uploader) {
     return uploader;
 };
 
+
+
 Uploader.prototype.Error = {
-    UNKNOWN: -1,
-    NO_FILES: 10,
-    INVALID_FILE: 20,
-    INVALID_TYPE: 21,
-    MAX_SIZE_EXCEEDED: 22,
-    FILE_EXISTS: 30,
+    UNKNOWN:"UNKNOWN_UPLOAD_ERROR",
+    NO_FILES:"NO_FILES",
+    INVALID_FILE:"INVALID_FILE",
+    INVALID_TYPE:"INVALID_TYPE",
+    MAX_SIZE_EXCEEDED:"MAX_SIZE_EXCEEDED",
+    FILE_EXISTS:"FILE_EXISTS"
 };
 
 Uploader.prototype.configure = function (options) {
@@ -367,12 +369,10 @@ Uploader.prototype.upload = function (request, callback) {
             };
 
             if (err) {
-                if (err instanceof Error || typeof err === "string") {
-                    err = {
-                        message: err.message,
-                        code: this.Error.UNKNOWN,
-                    };
-                }
+                err = {
+                    message: JSON.stringify(err),
+                    code: this.Error.UNKNOWN,
+                };
 
                 filesUploaded.push({
                     file: srcFile,
