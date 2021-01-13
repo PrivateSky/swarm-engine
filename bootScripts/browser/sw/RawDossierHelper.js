@@ -1,6 +1,6 @@
 const MimeType = require("../util/MimeType");
 const securityPolicies = "/app/security.policies";
-const cache = require("opendsu").loadApi("cache").getCache("middlewareCache", 1000*60*60);
+const cache = require("opendsu").loadApi("cache").getCacheForVault("middlewareCache", 1000*60*60);
 
 const USER_DETAILS = "user-details.json";
 
