@@ -300,13 +300,14 @@ function apiStandardHandler(req, res, next){
 function defaultHandling(req,res, next){
     console.log("Rejecting request", req.originalUrl);
     res.status(403);
-    res.write("Rejected by the service worker middleware");
+    res.send("Rejected by the service worker middleware");
     res.end();
 }
 
 function getSSIForMainDSU(req,res, next){
+    console.log("getSSIForMainDSU creation ssi", rawDossier.getCreationSSI());
     res.status(200);
-    res.write(rawDossier.getCreationSSI());
+    res.send(rawDossier.getCreationSSI());
     res.end();
 }
 
