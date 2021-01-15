@@ -304,9 +304,15 @@ function defaultHandling(req,res, next){
     res.end();
 }
 
+function getSSIForMainDSU(req,res, next){
+    res.status(200);
+    res.write(rawDossier.getCreationSSI());
+    res.end();
+}
 
 function initMiddleware(){
     server.get("/api", apiHandler);
+    server.get("/getSSIForMainDSU", getSSIForMainDSU);
     server.get("/api-standard/:method", apiStandardHandler);
 
     server.put("/create-channel/:channelName", createChannelHandler);
