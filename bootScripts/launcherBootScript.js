@@ -63,7 +63,7 @@ function launch(csb) {
     const beesHealer = require('swarmutils').beesHealer;
 
     const domains = {};
-    csb.getKeySSI((err, keySSI) => {
+    csb.getKeySSIAsString((err, keySSI) => {
         if (err) {
             throw err;
         }

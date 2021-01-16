@@ -10,7 +10,7 @@ function SWBootScript(keySSI) {
         const bootter = new BootEngine(getKeySSI, initializeSwarmEngine, ["webshims.js","pskruntime.js"],["domain.js"]);
         bootter.boot((err, archive)=>{
             if(err){
-                console.log(err);
+                printOpenDSUError("Failing to boot DSu Environment", err);
                 return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to boot host`, err));
             }
             // in fiecare csbReference vom gasi un obiect care va contine:
