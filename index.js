@@ -17,7 +17,7 @@ module.exports = {
     BootScripts: require('./bootScripts'),
     get SSAppPowerCord(){
         const or = require("overwrite-require");
-        const browserContexts = [or.constants.BROWSER_ENVIRONMENT_TYPE, or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE];
+        const browserContexts = [or.constants.BROWSER_ENVIRONMENT_TYPE, or.constants.SERVICE_WORKER_ENVIRONMENT_TYPE, or.constants.WEB_WORKER_ENVIRONMENT_TYPE];
         if (browserContexts.indexOf($$.environmentType) !== -1) {
             return require("./powerCords/browser/SSAppPowerCord");
         }
