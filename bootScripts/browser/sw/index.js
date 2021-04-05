@@ -122,7 +122,7 @@ self.addEventListener('message', function (event) {
 });
 
 function allowedRequests(url){
-    let servedByApiHub = ["/bricking/","/anchor/","/bdns", "x-blockchain-domain-request"];
+    let servedByApiHub = ["/bricking/","/anchor/","/bdns", "x-blockchain-domain-request", "/mq/"];
     for(let i=0; i<servedByApiHub.length; i++){
         if(url.includes(servedByApiHub[i])){
             return true;
