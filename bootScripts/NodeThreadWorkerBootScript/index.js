@@ -9,6 +9,7 @@ const apiStandardHandler = require("./apiStandardHandler");
 const uploadHandler = require("./uploadHandler");
 const downloadHandler = require("./downloadHandler");
 const fileRequestHandler = require("./fileRequestHandler");
+const mainDSUSSIHandler = require("./mainDSUSSIHandler");
 
 function boot() {
     const sendErrorAndExit = (error) => {
@@ -65,6 +66,9 @@ function boot() {
                 return downloadHandler.handle(dsu, res, requestedPath);
             }
 
+            if (requestedPath.indexOf("/getSSIForMainDSU") === 0) {
+                return mainDSUSSIHandler.handle(seed, res);
+            }
             fileRequestHandler.handle(dsu, req, res, seed, requestedPath);
         });
 
@@ -75,6 +79,7 @@ function boot() {
     };
 
     try {
+        console.log("Trying to load DSU for seed ===============================================", seed);
         resolver.loadDSU(seed, (err, dsu) => {
             if (err) {
                 console.log(`Error loading DSU`, err);
@@ -85,6 +90,7 @@ function boot() {
             startHttpServer(dsu);
         });
     } catch (error) {
+
         parentPort.postMessage({ error, status: "failed" });
         process.exit(-1);
     }
