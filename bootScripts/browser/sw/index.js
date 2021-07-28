@@ -10,7 +10,7 @@ let rawDossierHlp = null;
 let uploader = null;
 let seedResolver = null;
 
-function createChannelHandler (req, res) {
+function createChannelHandler(req, res) {
     ChannelsManager.createChannel(req.params.channelName, function (err) {
         if (err) {
             res.status(err.code || 500);
@@ -22,16 +22,16 @@ function createChannelHandler (req, res) {
     });
 }
 
-function forwardMessageHandler(req, res){
-    ChannelsManager.forwardMessage(req.params.channelName,function(err){
-        if(err){
+function forwardMessageHandler(req, res) {
+    ChannelsManager.forwardMessage(req.params.channelName, function (err) {
+        if (err) {
             res.status(err.code || 500);
         }
         res.end();
     });
 }
 
-function sendMessageHandler (req, res) {
+function sendMessageHandler(req, res) {
     UtilFunctions.prepareMessage(req, function (err, bodyAsBuffer) {
 
         if (err) {
@@ -51,7 +51,7 @@ function sendMessageHandler (req, res) {
     })
 }
 
-function receiveMessageHandler (req, res) {
+function receiveMessageHandler(req, res) {
     ChannelsManager.receiveMessage(req.params.channelName, function (err, message) {
         if (err) {
             res.status(err.code || 500);
@@ -76,7 +76,7 @@ self.addEventListener('activate', function (event) {
     event.waitUntil(clients.claim());
 });
 
-self.addEventListener('install', function(event) {
+self.addEventListener('install', function (event) {
     // The promise that skipWaiting() returns can be safely ignored.
     self.skipWaiting();
 });
@@ -121,10 +121,10 @@ self.addEventListener('message', function (event) {
     }
 });
 
-function allowedRequests(url){
-    let servedByApiHub = ["/bricking/","/anchor/","/bdns", "x-blockchain-domain-request", "/mq/", "/notifications/"];
-    for(let i=0; i<servedByApiHub.length; i++){
-        if(url.includes(servedByApiHub[i])){
+function allowedRequests(url) {
+    let servedByApiHub = ["/bricking/", "/anchor/", "/bdns", "x-blockchain-domain-request", "/mq/", "/notifications/"];
+    for (let i = 0; i < servedByApiHub.length; i++) {
+        if (url.includes(servedByApiHub[i])) {
             return true;
         }
     }
@@ -136,10 +136,10 @@ self.addEventListener('fetch', (event) => {
 
     const isExternalRequest = requestedUrl.hostname !== self.location.hostname;
     const mustAllowRequest = allowedRequests(event.request.url);
-    if(isExternalRequest || mustAllowRequest) {
-      return;
+    if (isExternalRequest || mustAllowRequest) {
+        return;
     }
-    
+
     event.respondWith(initState(event).then(server.handleEvent));
 });
 
@@ -158,7 +158,7 @@ function initState(event) {
     }
 
     return requestSeedFromClient().then((seed) => {
-        return new Promise((resolve, reject)=>{
+        return new Promise((resolve, reject) => {
             resolve(event);
         });
     });
@@ -213,65 +213,67 @@ function bootSWEnvironment(seed, callback) {
     let config = openDsu.loadApi("config");
 
     let mainSSI = openDsu.loadApi("keyssi").parse(seed);
-    if(mainSSI.getHint() == "server"){
+    if (mainSSI.getHint() == "server") {
         config.disableLocalVault();
     }
 
     bootScript.boot((err, _rawDossier) => {
-        if(err){
+        if (err) {
             return OpenDSUSafeCallback(callback)(createOpenDSUErrorWrapper(`Failed to boot SW environment>`, err));
         }
 
         global.rawDossier = _rawDossier;
 
-        openDsu.loadAPI("sc").getMainDSU().readFile("/environment.json", (err, envContent) => {
-                    if(err){
-                        console.trace("Failed reading enviroment.json", err);
-                    }
-                    try{
-                        let environment = JSON.parse(envContent.toString());
-                        config.autoconfigFromEnvironment(environment);
-                    } catch(err){
-                        console.trace("Failed evaling enviroment.js", err);
-                    }
-                })
-        rawDossierHlp = new RawDossierHelper(global.rawDossier);
-        initMiddleware();
-        callback();
+        global.rawDossier.readFile("/environment.json", (err, envContent) => {
+            if (err) {
+                console.trace("Failed reading enviroment.json", err);
+            }
+            try {
+                let environment = JSON.parse(envContent.toString());
+                config.autoconfigFromEnvironment(environment);
+            } catch (err) {
+                console.trace("Failed evaling enviroment.js", err);
+            }
+
+            rawDossierHlp = new RawDossierHelper(global.rawDossier);
+            initMiddleware();
+            callback();
+        })
+
     });
 }
 
-function apiHandler(req, res){
+function apiHandler(req, res) {
     const fncName = req.query.name;
     let args = req.query.arguments;
 
-    try{
+    try {
         args = JSON.parse(req.query.arguments);
-    }catch(err){
+    } catch (err) {
         res.statusCode = 400;
         return res.end();
     }
 
-    global.rawDossier.call(fncName, ...args, (...result)=>{
+    global.rawDossier.call(fncName, ...args, (...result) => {
         res.statusCode = 200;
         res.send(JSON.stringify(result));
         return res.end();
     });
 }
 
-function apiStandardHandler(req, res, next){
-    const { params : { method }, query} = req;
+function apiStandardHandler(req, res, next) {
+    const {params: {method}, query} = req;
 
-    switch(method) {
+    switch (method) {
         case "app-seed": {
-            const { path, name } = query;
+            const {path, name} = query;
             rawDossierHlp.getAppSeed(path, name, (err, seed) => {
-                if(err) {
+                if (err) {
                     console.error(err);
                     res.statusCode = 500;
                     return res.end();
                 }
-                
+
                 res.statusCode = 200;
                 res.send(seed);
                 return res.end();
@@ -280,12 +282,12 @@ function apiStandardHandler(req, res, next){
         }
         case "user-details": {
             rawDossierHlp.getUserDetails((err, userDetails) => {
-                if(err) {
+                if (err) {
                     console.error(err);
                     res.statusCode = 500;
                     return res.end();
                 }
-                
+
                 res.statusCode = 200;
                 res.send(JSON.stringify(userDetails));
                 return res.end();
@@ -297,21 +299,21 @@ function apiStandardHandler(req, res, next){
     next();
 }
 
-function defaultHandling(req,res, next){
+function defaultHandling(req, res, next) {
     console.log("Rejecting request", req.originalUrl);
     res.status(403);
     res.send("Rejected by the service worker middleware");
     res.end();
 }
 
-function getSSIForMainDSU(req,res, next){
+function getSSIForMainDSU(req, res, next) {
     console.log("getSSIForMainDSU creation ssi", rawDossier.getCreationSSI());
     res.status(200);
     res.send(rawDossier.getCreationSSI());
     res.end();
 }
 
-function initMiddleware(){
+function initMiddleware() {
     server.get("/api", apiHandler);
     server.get("/getSSIForMainDSU", getSSIForMainDSU);
     server.get("/api-standard/:method", apiStandardHandler);
@@ -326,15 +328,15 @@ function initMiddleware(){
 
     server.delete('/delete/*', deleteHandler);
     server.get('/apps/*', rawDossierHlp.handleLoadApp());
-    server.use("*","OPTIONS",UtilFunctions.handleOptionsRequest);
-    server.get("*",rawDossierHlp.handleLoadApp("/app", "/code"));
+    server.use("*", "OPTIONS", UtilFunctions.handleOptionsRequest);
+    server.get("*", rawDossierHlp.handleLoadApp("/app", "/code"));
 
-    server.put("*",defaultHandling);
-    server.post("*",defaultHandling);
-    server.delete("*",defaultHandling);
+    server.put("*", defaultHandling);
+    server.post("*", defaultHandling);
+    server.delete("*", defaultHandling);
 }
 
-function uploadHandler (req, res) {
+function uploadHandler(req, res) {
     try {
         uploader = Uploader.configureUploader(req.query, global.rawDossier, uploader);
     } catch (e) {
@@ -420,7 +422,7 @@ function downloadHandler(req, res) {
 
         let fileExt = filename.substring(filename.lastIndexOf(".") + 1);
         res.status(200);
-        res.set("Content-Type",MimeType.getMimeTypeFromExtension(fileExt).name);
+        res.set("Content-Type", MimeType.getMimeTypeFromExtension(fileExt).name);
         res.set("Content-Disposition", `attachment; filename="${filename}"`);
         res.send(readableStream);
     });
@@ -432,7 +434,7 @@ function extractPath(req) {
     return path;
 }
 
-function deleteHandler(req, res){
+function deleteHandler(req, res) {
     let path = extractPath(req);
     if (!path.length) {
         return res.sendError(404, "File not found");
@@ -440,8 +442,8 @@ function deleteHandler(req, res){
     }
     path = '/' + path.join('/');
 
-    global.rawDossier.delete(path, (err)=>{
-        if(err){
+    global.rawDossier.delete(path, (err) => {
+        if (err) {
             return res.sendError(500, err.message);
         }
         res.status(200);
