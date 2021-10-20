@@ -13,31 +13,36 @@ const handle = (dsu, res, requestedPath) => {
         return res.end("File not found");
     }
     path = `/${path.join("/")}`;
-
-    dsu.readFile(path, (err, stream) => {
+    dsu.refresh((err) => {
         if (err) {
-            if (err instanceof Error) {
-                if (err.message.indexOf("could not be found") !== -1) {
-                    res.statusCode = 404;
-                    return res.end("File not found");
+            res.statusCode = 500;
+            return res.end(err.message);
+        }
+        dsu.readFile(path, (err, stream) => {
+            if (err) {
+                if (err instanceof Error) {
+                    if (err.message.indexOf("could not be found") !== -1) {
+                        res.statusCode = 404;
+                        return res.end("File not found");
+                    }
+
+                    res.statusCode = 500;
+                    return res.end(err.message);
                 }
 
                 res.statusCode = 500;
-                return res.end(err.message);
+                return res.end(Object.prototype.toString.call(err));
             }
 
-            res.statusCode = 500;
-            return res.end(Object.prototype.toString.call(err));
-        }
+            // Extract the filename
+            const filename = path.split("/").pop();
 
-        // Extract the filename
-        const filename = path.split("/").pop();
-
-        let fileExt = filename.substring(filename.lastIndexOf(".") + 1);
-        res.setHeader("Content-Type", MimeType.getMimeTypeFromExtension(fileExt).name);
-        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-        res.statusCode = 200;
-        res.end(stream);
+            let fileExt = filename.substring(filename.lastIndexOf(".") + 1);
+            res.setHeader("Content-Type", MimeType.getMimeTypeFromExtension(fileExt).name);
+            res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+            res.statusCode = 200;
+            res.end(stream);
+        });
     });
 };
 

@@ -77,14 +77,13 @@ Uploader.configureUploader = function (config, dossier, uploader) {
 };
 
 
-
 Uploader.prototype.Error = {
-    UNKNOWN:"UNKNOWN_UPLOAD_ERROR",
-    NO_FILES:"NO_FILES",
-    INVALID_FILE:"INVALID_FILE",
-    INVALID_TYPE:"INVALID_TYPE",
-    MAX_SIZE_EXCEEDED:"MAX_SIZE_EXCEEDED",
-    FILE_EXISTS:"FILE_EXISTS"
+    UNKNOWN: "UNKNOWN_UPLOAD_ERROR",
+    NO_FILES: "NO_FILES",
+    INVALID_FILE: "INVALID_FILE",
+    INVALID_TYPE: "INVALID_TYPE",
+    MAX_SIZE_EXCEEDED: "MAX_SIZE_EXCEEDED",
+    FILE_EXISTS: "FILE_EXISTS"
 };
 
 Uploader.prototype.configure = function (options) {
@@ -255,71 +254,75 @@ Uploader.prototype.createFileFromRequest = function (request) {
  */
 Uploader.prototype.uploadFile = function (file, callback) {
     const destFile = `${this.uploadPath}${file.name}`;
-
-    let uploadPath = this.uploadPath;
-    if (uploadPath.substr(-1) === "/") {
-        uploadPath = uploadPath.substr(0, uploadPath.length - 1);
-    }
-
-    const writeFile = () => {
-        const doWriting = () => {
-            this.dossier.writeFile(destFile, fileAsStreamOrBuffer, { ignoreMounts: false }, (err) => {
-                callback(err, {
-                    path: destFile,
-                });
-            });
-        };
-
-        let fileAsStreamOrBuffer;
-        if (IS_NODE_ENV) {
-            fileAsStreamOrBuffer = file.content;
-            doWriting();
-        } else {
-            if (typeof file.stream === "function") {
-                fileAsStreamOrBuffer = new FileReadableStreamAdapter(file);
-                return doWriting();
-            }
-
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                fileAsStreamOrBuffer = e.target.result;
-                let sep = ";base64,";
-                if (fileAsStreamOrBuffer.indexOf(";base64,") !== -1) {
-                    fileAsStreamOrBuffer = fileAsStreamOrBuffer.split(sep)[1];
-                    fileAsStreamOrBuffer = atob(fileAsStreamOrBuffer);
-                }
-                return doWriting();
-            };
-            reader.onerror = function (e) {
-                reader.abort();
-            };
-            reader.onabort = function (e) {
-                return callback(reader.error);
-            };
-            reader.readAsDataURL(file);
+    this.dossier.refresh((err) => {
+        if (err) {
+            return callback(err);
         }
-    };
+        let uploadPath = this.uploadPath;
+        if (uploadPath.substr(-1) === "/") {
+            uploadPath = uploadPath.substr(0, uploadPath.length - 1);
+        }
 
-    if (this.preventOverwrite) {
-        // Check that file doesn't exist
-        this.dossier.listFiles(uploadPath, (err, files) => {
-            if (files) {
-                if (files.indexOf(file.name) !== -1) {
-                    const err = {
-                        message: "File exists",
-                        code: this.Error.FILE_EXISTS,
-                    };
-                    return callback(err, {
+        const writeFile = () => {
+            const doWriting = () => {
+                this.dossier.writeFile(destFile, fileAsStreamOrBuffer, {ignoreMounts: false}, (err) => {
+                    callback(err, {
                         path: destFile,
                     });
-                }
-            }
+                });
+            };
 
+            let fileAsStreamOrBuffer;
+            if (IS_NODE_ENV) {
+                fileAsStreamOrBuffer = file.content;
+                doWriting();
+            } else {
+                if (typeof file.stream === "function") {
+                    fileAsStreamOrBuffer = new FileReadableStreamAdapter(file);
+                    return doWriting();
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    fileAsStreamOrBuffer = e.target.result;
+                    let sep = ";base64,";
+                    if (fileAsStreamOrBuffer.indexOf(";base64,") !== -1) {
+                        fileAsStreamOrBuffer = fileAsStreamOrBuffer.split(sep)[1];
+                        fileAsStreamOrBuffer = atob(fileAsStreamOrBuffer);
+                    }
+                    return doWriting();
+                };
+                reader.onerror = function (e) {
+                    reader.abort();
+                };
+                reader.onabort = function (e) {
+                    return callback(reader.error);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        if (this.preventOverwrite) {
+            // Check that file doesn't exist
+            this.dossier.listFiles(uploadPath, (err, files) => {
+                if (files) {
+                    if (files.indexOf(file.name) !== -1) {
+                        const err = {
+                            message: "File exists",
+                            code: this.Error.FILE_EXISTS,
+                        };
+                        return callback(err, {
+                            path: destFile,
+                        });
+                    }
+                }
+
+                writeFile();
+            });
+        } else {
             writeFile();
-        });
-    } else {
-        writeFile();
-    }
+        }
+    });
 };
 
 /**

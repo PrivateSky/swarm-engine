@@ -2,7 +2,7 @@ const querystring = require("querystring");
 
 const handle = (dsu, res, requestedPath) => {
     const apiQuery = requestedPath.substr("/api?".length);
-    let { name: functionName, arguments: args } = querystring.parse(apiQuery);
+    let {name: functionName, arguments: args} = querystring.parse(apiQuery);
 
     try {
         args = JSON.parse(args);
@@ -11,10 +11,17 @@ const handle = (dsu, res, requestedPath) => {
         return res.end("Invalid arguments provided");
     }
 
-    dsu.call(functionName, ...args, (...result) => {
-        res.setHeader("Content-Type", "application/json");
-        res.statusCode = 200;
-        res.end(JSON.stringify(result));
+    dsu.refresh((err) => {
+        if (err) {
+            res.statusCode = 500;
+            return res.end(err.message);
+        }
+
+        dsu.call(functionName, ...args, (...result) => {
+            res.setHeader("Content-Type", "application/json");
+            res.statusCode = 200;
+            res.end(JSON.stringify(result));
+        });
     });
 };
 
