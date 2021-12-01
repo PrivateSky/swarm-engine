@@ -3,7 +3,7 @@ const MimeType = require("../browser/util/MimeType");
 const handle = (dsu, req, res, seed, requestedPath) => {
     const { url } = req;
 
-    console.log(`Handling file: ${requestedPath}`);
+    console.log(`Handling request for file: ${requestedPath}`);
     let file = requestedPath.split("?")[0]; // remove query params since this is a file request
     if (!file || file === "/" || file.indexOf(".") === -1) {
         file = "/index.html";
@@ -12,7 +12,7 @@ const handle = (dsu, req, res, seed, requestedPath) => {
     if (file.indexOf("/") !== 0) {
         file = `/${file}`;
     }
-    console.log(`Handling file: ${file}`);
+    console.log(`Looking for file: ${file}`);
 
     // console.log(`Handling iframe with KeySSI: ${seed} and file: ${file}`);
 

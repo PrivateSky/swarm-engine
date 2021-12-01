@@ -11,6 +11,12 @@ const downloadHandler = require("./downloadHandler");
 const fileRequestHandler = require("./fileRequestHandler");
 const mainDSUSSIHandler = require("./mainDSUSSIHandler");
 
+//we inject a supplementary tag in order make it more clear the source of the log
+let originalLog = console.log;
+console.log = function(...args){
+    originalLog("\t[IframeHandler]", ...args);
+}
+
 function boot() {
     const sendErrorAndExit = (error) => {
         parentPort.postMessage({ error });
@@ -20,7 +26,7 @@ function boot() {
     };
 
     process.on("uncaughtException", (error) => {
-        console.error("unchaughtException inside worker", error);
+        console.error("uncaughtException inside worker", error);
         sendErrorAndExit(error);
     });
 
@@ -38,7 +44,7 @@ function boot() {
     let { seed, authorizationKey } = workerData;
 
     const startHttpServer = (dsu) => {
-        var httpServer = http.createServer(function (req, res) {
+        let httpServer = http.createServer(function (req, res) {
             const { method, url } = req;
 
             if (!req.headers || req.headers.authorization !== authorizationKey) {
@@ -48,7 +54,7 @@ function boot() {
 
             const requestedPath = url;
 
-            console.log(`requestedPath: ${requestedPath}`);
+            console.log(`Handling url: ${requestedPath}`);
 
             if (requestedPath.indexOf("/api-standard") === 0) {
                 return apiStandardHandler.handle(dsu, res, requestedPath);
