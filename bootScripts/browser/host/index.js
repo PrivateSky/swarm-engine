@@ -1,8 +1,8 @@
 function setSSAppContext() {
     const baseUrl = typeof document !== "undefined" ? (document.getElementsByTagName("base")[0] || {}).href : undefined;
     let seed;
-    if (baseUrl && baseUrl.indexOf("/iframe/") !== -1) {
-        seed = baseUrl.substr(baseUrl.indexOf("/iframe/") + "/iframe/".length);
+    if (baseUrl && baseUrl.indexOf("/cloud-wallet/") !== -1) {
+        seed = baseUrl.substr(baseUrl.indexOf("/cloud-wallet/") + "/cloud-wallet/".length);
         const seedMatch = seed.match(/^([\w\d]*).*$/);
         seed = seedMatch ? seedMatch[1] : null;
 
