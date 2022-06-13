@@ -27,7 +27,7 @@ const handle = (dsu, req, res, seed, requestedPath) => {
             content = data.toString();
 
             if (["htm", "html", "xhtml"].includes(fileExtension)) {
-                const baseUrl = `${url.substr(0, url.indexOf("/iframe"))}/iframe/${seed}/`;
+                const baseUrl = `${url.substr(0, url.indexOf("/cloud-wallet"))}/cloud-wallet/${seed}/`;
                 content = content.replace(
                     "PLACEHOLDER_THAT_WILL_BE_REPLACED_BY_SW_OR_SERVER_WITH_BASE_TAG",
                     `<base href="${baseUrl}">`
