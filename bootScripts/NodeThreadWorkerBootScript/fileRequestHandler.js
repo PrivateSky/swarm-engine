@@ -42,8 +42,8 @@ const handle = (dsu, req, res, seed, requestedPath) => {
         if (err) {
             dsu.readFile(`/code${file}`, (err, fileContent) => {
                 if (err) {
-                    console.log(`Error reading file /code${file}`, err);
-                    res.statusCode = 500;
+                    //console.log(`Error reading file /code${file}`, err);
+                    res.statusCode = 404;
                     return res.end("Error reading file");
                 }
 
