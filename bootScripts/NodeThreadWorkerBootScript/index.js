@@ -4,6 +4,7 @@ const { parentPort, workerData } = require(worker_threads);
 const openDSU = require("opendsu");
 const resolver = openDSU.loadApi("resolver");
 
+const walletHandler = require("./walletHandler");
 const apiHandler = require("./apiHandler");
 const apiStandardHandler = require("./apiStandardHandler");
 const uploadHandler = require("./uploadHandler");
@@ -13,9 +14,29 @@ const mainDSUSSIHandler = require("./mainDSUSSIHandler");
 
 //we inject a supplementary tag in order make it more clear the source of the log
 let originalLog = console.log;
-console.log = function(...args){
-    originalLog("\t[IframeHandler]", ...args);
-}
+console.log = function (...args) {
+    originalLog("\t[CloudWallet]", ...args);
+};
+
+const initialiseEnclave = (enclaveType, keySSI) => {
+    const enclaveAPI = openDSU.loadAPI("enclave");
+    const scAPI = openDSU.loadAPI("sc");
+    return new Promise((resolve, reject) => {
+        if (!keySSI) {
+            console.log(`KeySSI not specified for enclave ${enclaveType}`);
+            return reject();
+        }
+        const enclave = enclaveAPI.initialiseWalletDBEnclave(keySSI);
+        enclave.on("initialised", async () => {
+            try {
+                await $$.promisify(scAPI.setEnclave)(enclave, enclaveType);
+                resolve();
+            } catch (e) {
+                reject(e);
+            }
+        });
+    });
+};
 
 function boot() {
     const sendErrorAndExit = (error) => {
@@ -56,6 +77,14 @@ function boot() {
 
             console.log(`Handling url: ${requestedPath}`);
 
+            if (method === "PUT" && requestedPath.indexOf("/create-dsu") === 0) {
+                return walletHandler.createDSU(dsu, res);
+            }
+
+            if (method === "PUT" && requestedPath.indexOf("/append/") === 0) {
+                return walletHandler.appendToDSU(dsu, req, res);
+            }
+
             if (requestedPath.indexOf("/api-standard") === 0) {
                 return apiStandardHandler.handle(dsu, res, requestedPath);
             }
@@ -86,17 +115,45 @@ function boot() {
 
     try {
         console.log("Trying to load DSU for seed ===============================================", seed);
-        resolver.loadDSU(seed, (err, dsu) => {
+        const keySSISpace = openDSU.loadAPI("keyssi");
+        const SSITypes = require("key-ssi-resolver").SSITypes;
+        const seedSSI = keySSISpace.parse(seed);
+        const isWallet = seedSSI.getTypeName() === SSITypes.WALLET_SSI;
+
+        resolver.loadDSU(seed, async (err, dsu) => {
             if (err) {
                 console.log(`Error loading DSU`, err);
                 return sendErrorAndExit(err);
+            }
+
+            if (isWallet) {
+                try {
+                    console.log(`Wallet detected for seed ${seed}`);
+                    const writableDSU = dsu.getWritableDSU();
+
+                    dsu.writeFile = (path, data, callback) => {
+                        writableDSU.writeFile(path, data, callback);
+                    };
+                    dsu.readFile = (path, callback) => {
+                        writableDSU.readFile(path, callback);
+                    };
+
+                    const constants = openDSU.constants;
+                    const environmentConfig = JSON.parse(await $$.promisify(dsu.readFile)(constants.ENVIRONMENT_PATH));
+                    console.log(`Loaded environment config for wallet ${seed}`, environmentConfig);
+
+                    await initialiseEnclave("MAIN_ENCLAVE", environmentConfig[constants.MAIN_ENCLAVE.KEY_SSI]);
+                    await initialiseEnclave("SHARED_ENCLAVE", environmentConfig[constants.SHARED_ENCLAVE.KEY_SSI]);
+                } catch (error) {
+                    console.log(`Error loading wallet`, error);
+                    return sendErrorAndExit(error);
+                }
             }
 
             rawDossier = dsu;
             startHttpServer(dsu);
         });
     } catch (error) {
-
         parentPort.postMessage({ error, status: "failed" });
         process.exit(-1);
     }
