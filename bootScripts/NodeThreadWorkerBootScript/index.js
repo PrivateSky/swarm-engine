@@ -119,7 +119,12 @@ function boot() {
         const SSITypes = require("key-ssi-resolver").SSITypes;
         const seedSSI = keySSISpace.parse(seed);
         const isWallet = seedSSI.getTypeName() === SSITypes.WALLET_SSI;
-
+        const http = openDSU.loadAPI("http");
+        http.registerInterceptor((data, callback)=>{
+            let {url, headers} = data;
+            headers.cookie = workerData.cookie;
+            callback(undefined, {url, headers})
+        });
         resolver.loadDSU(seed, async (err, dsu) => {
             if (err) {
                 console.log(`Error loading DSU`, err);
