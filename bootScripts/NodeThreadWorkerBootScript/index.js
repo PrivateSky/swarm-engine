@@ -122,7 +122,9 @@ function boot() {
         const http = openDSU.loadAPI("http");
         http.registerInterceptor((data, callback)=>{
             let {url, headers} = data;
-            headers.cookie = workerData.cookie;
+            if (workerData.cookie) {
+                headers.cookie = workerData.cookie;
+            }
             callback(undefined, {url, headers})
         });
         resolver.loadDSU(seed, async (err, dsu) => {
