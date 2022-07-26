@@ -11,6 +11,7 @@ const uploadHandler = require("./uploadHandler");
 const downloadHandler = require("./downloadHandler");
 const fileRequestHandler = require("./fileRequestHandler");
 const mainDSUSSIHandler = require("./mainDSUSSIHandler");
+const DSUCodeFileCacheHandler = require("./DSUCodeFileCacheHandler");
 
 //we inject a supplementary tag in order make it more clear the source of the log
 let originalLog = console.log;
@@ -62,7 +63,8 @@ function boot() {
         return sendErrorAndExit("missing authorizationKey");
     }
 
-    let { seed, authorizationKey } = workerData;
+    let { seed, authorizationKey, cacheContainerPath } = workerData;
+    let dsuCodeFileCacheHandler; // used to construct local FS cache from DSU mounted at /code
 
     const startHttpServer = (dsu) => {
         let httpServer = http.createServer(function (req, res) {
@@ -104,7 +106,7 @@ function boot() {
             if (requestedPath.indexOf("/getSSIForMainDSU") === 0) {
                 return mainDSUSSIHandler.handle(seed, res);
             }
-            fileRequestHandler.handle(dsu, req, res, seed, requestedPath);
+            fileRequestHandler.handle(dsu, req, res, seed, requestedPath, dsuCodeFileCacheHandler);
         });
 
         httpServer.listen(0, function () {
@@ -154,6 +156,23 @@ function boot() {
                 } catch (error) {
                     console.log(`Error loading wallet`, error);
                     return sendErrorAndExit(error);
+                }
+            }
+
+            if (cacheContainerPath) {
+                try {
+                    dsuCodeFileCacheHandler = new DSUCodeFileCacheHandler(dsu, cacheContainerPath);
+
+                    // construct the cache in parallel since it takes a bit of time
+                    setTimeout(async () => {
+                        try {
+                            await dsuCodeFileCacheHandler.constructCache();
+                        } catch (error) {
+                            console.log("Failed to construct DSU cache", error);
+                        }
+                    });
+                } catch (error) {
+                    console.log("Failed to create DSU code handler", error)
                 }
             }
 

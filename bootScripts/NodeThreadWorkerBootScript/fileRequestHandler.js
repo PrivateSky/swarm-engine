@@ -1,6 +1,6 @@
 const MimeType = require("../browser/util/MimeType");
 
-const handle = (dsu, req, res, seed, requestedPath) => {
+const handle = async (dsu, req, res, seed, requestedPath, dsuCodeFileCacheHandler) => {
     const { url } = req;
 
     console.log(`Handling request for file: ${requestedPath}`);
@@ -38,8 +38,19 @@ const handle = (dsu, req, res, seed, requestedPath) => {
         res.end(content);
     };
 
-    dsu.readFile(`/app${file}`, (err, fileContent) => {
+    dsu.readFile(`/app${file}`, async (err, fileContent) => {
         if (err) {
+            if(dsuCodeFileCacheHandler) {
+                try {
+                    const fileContent = await dsuCodeFileCacheHandler.getFileContent(file);
+                    if(fileContent) {
+                        return sendFile(fileContent);
+                    }                    
+                } catch (error) {
+                    console.log("An error has occurred while getting file from cache", file);
+                }
+            }
+
             dsu.readFile(`/code${file}`, (err, fileContent) => {
                 if (err) {
                     //console.log(`Error reading file /code${file}`, err);
