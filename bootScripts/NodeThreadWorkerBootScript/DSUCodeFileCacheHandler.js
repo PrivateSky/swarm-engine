@@ -38,16 +38,9 @@ class DSUCodeFileCacheHandler {
         const codeMount = mountedDSUs.find((mount) => mount.path === codeFolderName);
         const codeDSU = await $$.promisify(resolver.loadDSU)(codeMount.identifier);
         const codeFiles = await $$.promisify(codeDSU.listFiles)("/");
+        const lastVersion = $$.promisify(codeDSU.getLastHashLinkSSI)();
 
-        // commenting out due to getAllVersions failing on Android
-        // const anchoringApi = openDSU.loadAPI("anchoring");
-        // const codeMountKeySSI = keySSISpace.parse(codeMount.identifier);
-        // const versions = await $$.promisify(anchoringApi.getAllVersions)(codeMountKeySSI);
-        // const lastVersion = versions[versions.length - 1];
-        // const currentVersionHashLinkSSI = lastVersion.getIdentifier();
-
-        // using codeMount.identifier instead of currentVersionHashLinkSSI
-        const cacheFolderPath = path.join(this.cacheFolderBasePath, codeMount.identifier);
+        const cacheFolderPath = path.join(this.cacheFolderBasePath, lastVersion);
         this.cacheFolderPath = cacheFolderPath;
 
         const readDSUFileAsync = $$.promisify(codeDSU.readFile);
@@ -55,7 +48,7 @@ class DSUCodeFileCacheHandler {
         const isHashLinkFolderAlreadyPresent = await pathExistsAsync(cacheFolderPath);
 
         if (!isHashLinkFolderAlreadyPresent) {
-            console.log(`Creating cache folder for DSU ${codeMount.identifier}: ${cacheFolderPath}`);
+            console.log(`Creating cache folder for DSU ${lastVersion}: ${cacheFolderPath}`);
             try {
                 await mkdirAsync(cacheFolderPath, { recursive: true });
             } catch (error) {
