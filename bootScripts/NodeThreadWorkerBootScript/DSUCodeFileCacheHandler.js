@@ -38,12 +38,12 @@ class DSUCodeFileCacheHandler {
         const codeMount = mountedDSUs.find((mount) => mount.path === codeFolderName);
         const codeDSU = await $$.promisify(resolver.loadDSU)(codeMount.identifier);
         const codeFiles = await $$.promisify(codeDSU.listFiles)("/");
-        const lastVersion = $$.promisify(codeDSU.getLastHashLinkSSI)();
-
+        let lastVersion = await $$.promisify(codeDSU.getLastHashLinkSSI)();
+        lastVersion = lastVersion.getIdentifier();
         const cacheFolderPath = path.join(this.cacheFolderBasePath, lastVersion);
         this.cacheFolderPath = cacheFolderPath;
 
-        const readDSUFileAsync = $$.promisify(codeDSU.readFile);
+        const readDSUFileAsync = await $$.promisify(codeDSU.readFile);
 
         const isHashLinkFolderAlreadyPresent = await pathExistsAsync(cacheFolderPath);
 
