@@ -41,7 +41,8 @@ const createDSU = async (wallet, response) => {
         console.log("Creating DSU from main enclave...");
         const dsu = await $$.promisify(enclaveDB.createDSU)(seedSSI);
 
-        const sReadSSI = (await $$.promisify(dsu.getKeySSIAsObject)()).derive();
+        let sReadSSI = await $$.promisify(dsu.getKeySSIAsObject)();
+        sReadSSI = await $$.promisify(sReadSSI.derive)();
         const sReadSSIId = sReadSSI.getIdentifier();
 
         await $$.promisify(wallet.refresh);
